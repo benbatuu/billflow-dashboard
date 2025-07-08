@@ -1,0 +1,120 @@
+---
+alwaysApply: true
+---
+# 📄 SaaS Uygulama Geliştirme Rehberi & Kuralları
+
+## ✅ Uygulamanın Adı
+Billflow Clone — Fatura & Abonelik Takip Uygulaması
+
+## ✅ Uygulamanın Amacı
+Bu uygulama, küçük işletmelerin, freelancerların ve ajansların:
+- Faturalarını hızlıca oluşturabilmesi (PDF dahil)
+- Müşteri yönetimi yapabilmesi
+- Abonelik takibi & ödeme hatırlatmaları planlayabilmesi
+- Stripe veya iyzico üzerinden ödeme alabilmesi
+- Otomatik e-posta bildirimleri gönderebilmesi
+- Gelir-gider raporları ve istatistikleri görebilmesi  
+için geliştirilmiştir.
+
+---
+
+## ✅ Hedef Kullanıcılar:
+- Freelancerlar
+- Küçük ajanslar
+- KOBİ’ler
+- SaaS girişimleri
+
+---
+
+## ✅ Rollerin Tanımı
+| Rol       | Açıklama                                                                 |
+|-----------|--------------------------------------------------------------------------|
+| **Admin** | Tüm sistemi yönetir, tüm verilere erişebilir. Genelde yazılım sahibi.    |
+| **Owner** | Hesabın/şirketin sahibi. Faturalandırma, müşteri, ödeme yönetimi yetkisi.|
+| **Staff** | Owner tarafından davet edilen ekip üyeleri, bazı işlemleri yapabilir.    |
+| **Viewer**| Sadece rapor ve dashboard görüntüler, işlem yapamaz.                     |
+
+---
+
+## ✅ Menü Yapısı & Erişim
+| Menü                      | Admin | Owner | Staff | Viewer |
+|---------------------------|-------|-------|-------|--------|
+| Dashboard                 | ✅     | ✅     | ✅     | ✅      |
+| Invoices (Faturalar)      | ✅     | ✅     | ✅     | ❌      |
+| Customers (Müşteriler)    | ✅     | ✅     | ✅     | ❌      |
+| Subscriptions (Abonelikler)| ✅    | ✅     | ❌     | ❌      |
+| Payments (Ödemeler)       | ✅     | ✅     | ✅     | ❌      |
+| Reports (Raporlar)        | ✅     | ✅     | ✅     | ✅      |
+| Notifications (E-posta)   | ✅     | ✅     | ❌     | ❌      |
+| Team (Ekip Yönetimi)      | ✅     | ✅     | ✅     | ❌      |
+| Settings (Ayarlar)        | ✅     | ✅     | ❌     | ❌      |
+| Integrations (Entegrasyon)| ✅     | ✅     | ❌     | ❌      |
+| Support (Destek)          | ✅     | ✅     | ✅     | ✅      |
+
+---
+
+## ✅ Temel İşlevler
+### 1. Fatura Yönetimi:
+- Fatura oluşturma, PDF indirme
+- Ödeme durumu takibi
+
+### 2. Müşteri Yönetimi:
+- Müşteri ekleme/düzenleme/silme
+- Müşteri fatura geçmişi
+
+### 3. Abonelik Yönetimi:
+- Abonelik oluşturma
+- Ödeme hatırlatıcıları
+- Stripe / iyzico entegrasyonu
+
+### 4. Bildirimler:
+- E-posta şablonları
+- Otomatik bildirimler
+
+### 5. Raporlar:
+- Gelir & gider analizi
+- Grafiksel istatistikler
+
+### 6. Entegrasyonlar:
+- Stripe
+- iyzico
+- API Yönetimi (opsiyonel)
+
+---
+
+## ✅ Geliştirme Notları:
+- Uygulama **Next.js (App Router)** ve **shadcn/ui** üzerine kurulu.
+- Role-based access için middleware kullanılacak.
+- Her sayfa erişiminde **role check** zorunlu.
+- Stripe / iyzico için ayrı servis dosyaları açılacak.
+- Otomatik e-posta için mailer servisi (örn. Resend, Nodemailer).
+- PDF işlemleri için **pdf-lib** veya benzeri kullanılabilir.
+- Mobil uyumlu olacak (Tailwind CSS üzerinden).
+
+---
+
+## ✅ Kod Standartları:
+- Fonksiyon isimleri İngilizce.
+- Komponent isimleri PascalCase.
+- Dosya isimleri kebab-case.
+- Role & Menu yetkileri JSON dosyasından otomatik çekilecek.
+- Shadcn UI bileşenleri ile tutarlı tema.
+
+---
+
+## ✅ Ekstra:
+- Sidebar, dinamik olarak kullanıcı rolüne göre menüleri gösterecek.
+- Dashboard, gelir & abonelik özetini içerecek.
+- Settings sayfasında firma bilgileri, fatura ayarları olacak.
+
+---
+
+## ✅ Kurallar:
+1. Role-based Access Control (RBAC) **her sayfada zorunlu**.
+2. Menü bileşenleri **tek bir dosyada** tutulacak (`menu-config.ts`).
+3. Yeni özellik eklenirken:
+   - Menüye eklenecekse önce `menu-config.ts`'e rol tanımıyla eklenmeli.
+   - Yetki kontrolü unutulmamalı.
+4. E-posta bildirimleri için test ortamı ayarlanmalı.
+5. Ödeme servisleri ayrı dosyada kapsüllenmeli.
+
