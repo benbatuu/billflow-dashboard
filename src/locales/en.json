@@ -142,6 +142,9 @@
                 "button": "Cancel Subscription",
                 "input_error": "Please type the confirmation word exactly",
                 "confirm_success": "Subscription cancelled successfully"
+            },
+            "card": {
+                "expiry_year_error": "Expiry year must not be in the past."
             }
         },
         "invoices": {

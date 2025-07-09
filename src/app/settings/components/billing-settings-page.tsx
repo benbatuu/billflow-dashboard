@@ -2,15 +2,17 @@
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerClose } from "@/components/ui/drawer"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog"
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useEffect, useRef, useState } from "react";
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
-import { ArrowRightIcon, CodeIcon, LayoutGridIcon, MonitorSmartphoneIcon, FileTextIcon, GitBranchIcon, LifeBuoyIcon, BookIcon, BrushIcon, Settings2Icon, SquareCheckBigIcon, ZapIcon, ServerIcon, PhoneCallIcon, UsersIcon, GitPullRequestIcon, CalendarCheck2Icon, BellIcon, DatabaseIcon, SlackIcon, ClipboardListIcon, ArrowRightIcon as ArrowRightIcon2, X } from "lucide-react"
+import { ArrowRightIcon, CodeIcon, LayoutGridIcon, MonitorSmartphoneIcon, FileTextIcon, GitBranchIcon, LifeBuoyIcon, BookIcon, BrushIcon, Settings2Icon, SquareCheckBigIcon, ZapIcon, ServerIcon, PhoneCallIcon, UsersIcon, GitPullRequestIcon, CalendarCheck2Icon, BellIcon, DatabaseIcon, SlackIcon, ClipboardListIcon, ArrowRightIcon as ArrowRightIcon2, X, CreditCardIcon } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { t, getCurrentLang } from '@/lib/i18n';
+import { IconEdit, IconTrash } from "@tabler/icons-react";
+import { IconFileText, IconChevronDown, IconChevronRight } from "@tabler/icons-react";
 
 const planFeatures = [
     { label: "User Limit", value: "10" },
@@ -18,10 +20,10 @@ const planFeatures = [
     { label: "Support", value: "Email" },
 ]
 const billingHistory = [
-    { date: "2024-06-01", plan: "Pro", amount: "$29", status: "Paid", pdf: true },
-    { date: "2024-05-01", plan: "Pro", amount: "$29", status: "Paid", pdf: true },
-    { date: "2024-04-01", plan: "Pro", amount: "$29", status: "Paid", pdf: true },
-]
+    { id: '1', date: "2024-06-01", plan: "Pro", amount: "$29", status: "Paid", invoiceNo: "INV-20240601", customer: "Acme Inc.", paymentMethod: "Visa **** 4242", pdf: "/invoices/invoice-20240601.pdf" },
+    { id: '2', date: "2024-05-01", plan: "Pro", amount: "$29", status: "Paid", invoiceNo: "INV-20240501", customer: "Acme Inc.", paymentMethod: "Visa **** 4242", pdf: "/invoices/invoice-20240501.pdf" },
+    { id: '3', date: "2024-04-01", plan: "Pro", amount: "$29", status: "Paid", invoiceNo: "INV-20240401", customer: "Acme Inc.", paymentMethod: "Visa **** 4242", pdf: "/invoices/invoice-20240401.pdf" },
+];
 
 // 1. Update plans array to include both priceMonthly and priceAnnual
 const plans = [
@@ -127,11 +129,7 @@ function PlanCard({ plan, highlight, badge, features, planDuration }: { plan: an
 }
 
 // In CancelSubscriptionModal, make the DialogContent wider and use neutral design
-function CancelSubscriptionModal({ activePlan, onCancel, onClose }: {
-    activePlan: { name: string; priceMonthly: number; features: string[]; renewalDate: string };
-    onCancel: (data: { reason: string; message: string }) => void;
-    onClose: () => void;
-}) {
+function CancelSubscriptionModal({ activePlan, onCancel, onClose }: { activePlan: { name: string; priceMonthly: number; features: string[]; renewalDate: string }; onCancel: (data: { reason: string; message: string }) => void; onClose: () => void; }) {
     const [translations, setTranslations] = useState<any>(null);
     const [reason, setReason] = useState('');
     const [message, setMessage] = useState('');
@@ -260,6 +258,60 @@ function CancelSubscriptionModal({ activePlan, onCancel, onClose }: {
     );
 }
 
+// SVG icons for card brands
+const brandFileMap: Record<string, string> = {
+    'visa': 'visa',
+    'mastercard': 'mastercard',
+    'american express': 'amex',
+    'amex': 'amex',
+    'discover': 'discover',
+    'diners club': 'diners-club',
+    'diners-club': 'diners-club',
+    'jcb': 'jcb',
+    'unionpay': 'unionpay',
+};
+const CardBrandIcon = ({ brand }: { brand: string }) => {
+    if (!brand) return null;
+    const key = brand.toLowerCase().replace(/[^a-z0-9- ]/g, '').replace(/ +/g, '-');
+    const file = brandFileMap[key] || key;
+    return (
+        <img
+            src={`/images/cardBrands/${file}.png`}
+            alt={brand}
+            width={32}
+            height={32}
+            className="w-8 h-8 object-contain"
+        />
+    );
+};
+
+// Mock cards data
+const mockCards = [
+    { id: '1', brand: 'visa', last4: '4242', exp: '12/26', name: 'John Doe' },
+    { id: '2', brand: 'mastercard', last4: '4444', exp: '11/27', name: 'Acme Inc.' },
+    { id: '3', brand: 'amex', last4: '3005', exp: '09/28', name: 'Jane Smith' },
+];
+
+// Card types array
+const cardTypes = [
+    { name: 'Visa', fileKey: 'visa', regex: /^4[0-9]{12}(?:[0-9]{3}){0,2}$/, cvvLength: [3] },
+    { name: 'MasterCard', fileKey: 'mastercard', regex: /^(5[1-5][0-9]{14}|2(2[2-9][0-9]{12}|[3-6][0-9]{13}|7[01][0-9]{12}|720[0-9]{12}))$/, cvvLength: [3] },
+    { name: 'American Express', fileKey: 'amex', regex: /^3[47][0-9]{13}$/, cvvLength: [4] },
+    { name: 'Discover', fileKey: 'discover', regex: /^6(?:011|5[0-9]{2})[0-9]{12}$/, cvvLength: [3] },
+    { name: 'Diners Club', fileKey: 'diners-club', regex: /^3(?:0[0-5]|[68][0-9])[0-9]{11}$/, cvvLength: [3] },
+    { name: 'JCB', fileKey: 'jcb', regex: /^(?:2131|1800|35\d{3})\d{11}$/, cvvLength: [3] },
+    { name: 'UnionPay', fileKey: 'unionpay', regex: /^62[0-9]{14,17}$/, cvvLength: [3] },
+];
+
+// Card type detection helper
+function getCardType(number: string) {
+    const n = number.replace(/\s/g, '');
+    for (const type of cardTypes) {
+        if (type.regex.test(n)) return type;
+    }
+    return null;
+}
+
 export default function BillingSettingsPage() {
     const [form, setForm] = useState({
         billingName: "",
@@ -272,6 +324,10 @@ export default function BillingSettingsPage() {
     // TODO: multilanguage labels, real data, role check
     const [planDuration, setPlanDuration] = useState<'monthly' | 'annual'>('annual');
     const [activePlan, setActivePlan] = useState<any>(null); // State to hold the active plan for cancellation modal
+    const [cards, setCards] = useState(mockCards);
+    const [selectedCardId, setSelectedCardId] = useState(cards[0]?.id || '');
+    // Add edit modal state
+    const [editCardId, setEditCardId] = useState<string | null>(null);
 
     useEffect(() => {
         // Set a default active plan for the cancellation modal
@@ -319,11 +375,29 @@ export default function BillingSettingsPage() {
                         <CardDescription>Manage your saved cards</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-base font-medium">Visa **** 4242</div>
-                        <div className="text-sm text-muted-foreground">Exp: 12/26</div>
-                        <div className="flex flex-col gap-2 mt-2">
+                        <div className="flex flex-col gap-3">
+                            {cards.map(card => (
+                                <div key={card.id} className="border rounded-lg px-4 py-2 bg-muted w-full">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3 min-w-0">
+                                            <CardBrandIcon brand={card.brand} />
+                                            <div className="font-medium truncate">{card.brand.charAt(0).toUpperCase() + card.brand.slice(1)}</div>
+                                        </div>
+                                        <div className="flex items-center gap-1 flex-shrink-0 md:gap-2 md:mb-0 mb-1">
+                                            <Button size="sm" variant="outline" onClick={() => { setEditCardId(card.id); }} className="hover:cursor-pointer p-1 md:p-2"><IconEdit className="w-8 h-8" /></Button>
+                                            <Button size="sm" variant="outline" onClick={() => { setSelectedCardId(card.id); setOpen("removeCard"); }} className="hover:cursor-pointer p-1 md:p-2"><IconTrash className="w-8 h-8" /></Button>
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground pl-10 mt-1">
+                                        <span>{card.name}</span>
+                                        <span>• **** {card.last4}</span>
+                                        <span>• Exp: {card.exp}</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="flex flex-col gap-2 mt-4">
                             <Button variant="outline" onClick={() => setOpen("addCard")}>Add New Card</Button>
-                            <Button variant="outline" onClick={() => setOpen("removeCard")}>Remove Card</Button>
                         </div>
                     </CardContent>
                 </Card>
@@ -366,24 +440,16 @@ export default function BillingSettingsPage() {
                             <table className="min-w-full text-sm border rounded-lg overflow-hidden">
                                 <thead>
                                     <tr className="bg-muted text-foreground">
+                                        <th className="px-4 py-2 text-left">#</th>
                                         <th className="px-4 py-2 text-left">Date</th>
                                         <th className="px-4 py-2 text-left">Plan</th>
                                         <th className="px-4 py-2 text-left">Amount</th>
-                                        <th className="px-4 py-2 text-left">Status</th>
-                                        <th className="px-4 py-2 text-left">Invoice PDF</th>
+                                        <th className="px-4 py-2 text-left">Invoice</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {billingHistory.map((row, i) => (
-                                        <tr key={i} className="border-b last:border-0">
-                                            <td className="px-4 py-2 whitespace-nowrap">{row.date}</td>
-                                            <td className="px-4 py-2 whitespace-nowrap">{row.plan}</td>
-                                            <td className="px-4 py-2 whitespace-nowrap">{row.amount}</td>
-                                            <td className="px-4 py-2 whitespace-nowrap">{row.status}</td>
-                                            <td className="px-4 py-2 whitespace-nowrap">
-                                                {row.pdf ? <Button size="sm" variant="outline">PDF</Button> : "-"}
-                                            </td>
-                                        </tr>
+                                        <ExpandableBillingRow key={i} row={row} />
                                     ))}
                                 </tbody>
                             </table>
@@ -426,14 +492,24 @@ export default function BillingSettingsPage() {
                         <CardDescription>Manage your saved cards</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                            <div>
-                                <div className="text-base font-medium">Visa **** 4242</div>
-                                <div className="text-sm text-muted-foreground">Exp: 12/26</div>
-                            </div>
-                            <div className="flex flex-col gap-2 md:items-end">
+                        <div className="flex flex-col gap-3">
+                            {cards.map(card => (
+                                <div key={card.id} className="flex items-center justify-between border rounded-lg px-4 py-2 bg-muted w-full">
+                                    <div className="flex items-center gap-3 min-w-0">
+                                        <CardBrandIcon brand={card.brand} />
+                                        <div className="font-medium truncate">{card.brand.charAt(0).toUpperCase() + card.brand.slice(1)}</div>
+                                        <div className="text-sm text-muted-foreground">{card.name}</div>
+                                        <div className="text-sm text-muted-foreground">**** {card.last4}</div>
+                                        <div className="text-xs text-muted-foreground ml-2">Exp: {card.exp}</div>
+                                    </div>
+                                    <div className="flex items-center gap-1 flex-shrink-0">
+                                        <Button size="sm" variant="outline" onClick={() => { setEditCardId(card.id); }} className="hover:cursor-pointer"><IconEdit className="w-8 h-8" /></Button>
+                                        <Button size="sm" variant="outline" onClick={() => { setSelectedCardId(card.id); setOpen("removeCard"); }} className="hover:cursor-pointer"><IconTrash className="w-8 h-8" /></Button>
+                                    </div>
+                                </div>
+                            ))}
+                            <div className="mt-4">
                                 <Button variant="outline" onClick={() => setOpen("addCard")}>Add New Card</Button>
-                                <Button variant="outline" onClick={() => setOpen("removeCard")}>Remove Card</Button>
                             </div>
                         </div>
                     </CardContent>
@@ -481,6 +557,9 @@ export default function BillingSettingsPage() {
                                         <th className="px-4 py-2 text-left">Plan</th>
                                         <th className="px-4 py-2 text-left">Amount</th>
                                         <th className="px-4 py-2 text-left">Status</th>
+                                        <th className="px-4 py-2 text-left">Invoice No</th>
+                                        <th className="px-4 py-2 text-left">Customer</th>
+                                        <th className="px-4 py-2 text-left">Payment Method</th>
                                         <th className="px-4 py-2 text-left">Invoice PDF</th>
                                     </tr>
                                 </thead>
@@ -491,8 +570,11 @@ export default function BillingSettingsPage() {
                                             <td className="px-4 py-2 whitespace-nowrap">{row.plan}</td>
                                             <td className="px-4 py-2 whitespace-nowrap">{row.amount}</td>
                                             <td className="px-4 py-2 whitespace-nowrap">{row.status}</td>
+                                            <td className="px-4 py-2 whitespace-nowrap">{row.invoiceNo}</td>
+                                            <td className="px-4 py-2 whitespace-nowrap">{row.customer}</td>
+                                            <td className="px-4 py-2 whitespace-nowrap">{row.paymentMethod}</td>
                                             <td className="px-4 py-2 whitespace-nowrap">
-                                                {row.pdf ? <Button size="sm" variant="outline">PDF</Button> : "-"}
+                                                {row.pdf ? <a href={row.pdf} target="_blank" rel="noopener noreferrer"><IconFileText className="w-6 h-6 hover:scale-110 transition" /></a> : "-"}
                                             </td>
                                         </tr>
                                     ))}
@@ -509,10 +591,7 @@ export default function BillingSettingsPage() {
                     <Drawer open={true} onOpenChange={v => !v && setOpen("")}>
                         <DrawerContent>
                             <DrawerHeader>
-                                <DrawerTitle>Change Plan</DrawerTitle>
-                                <DrawerClose asChild>
-                                    <Button variant="outline" className="absolute right-4 top-4">Close</Button>
-                                </DrawerClose>
+                                <DrawerTitle className="text-left text-base text-medium">Change Plan</DrawerTitle>
                             </DrawerHeader>
                             {/* In DrawerContent (mobile), add the planDuration switch and use PlanCard for each plan */}
                             <div className="p-4">
@@ -590,24 +669,22 @@ export default function BillingSettingsPage() {
                     <Drawer open={true} onOpenChange={v => !v && setOpen("")}>
                         <DrawerContent>
                             <DrawerHeader>
-                                <DrawerTitle>Add New Card</DrawerTitle>
-                                <DrawerClose asChild>
-                                    <Button variant="outline" className="absolute right-4 top-4">Close</Button>
-                                </DrawerClose>
+                                <DrawerTitle className="text-left text-base text-medium">Add New Card</DrawerTitle>
                             </DrawerHeader>
-                            <div className="p-4">Add card form (placeholder)</div>
+                            <div className="p-4 flex flex-col gap-4">
+                                <AddCardForm onSuccess={() => setOpen("")} onCancel={() => setOpen("")} />
+                            </div>
                         </DrawerContent>
                     </Drawer>
                 ) : (
                     <Dialog open={true} onOpenChange={v => !v && setOpen("")}>
                         <DialogContent>
                             <DialogHeader>
-                                <DialogTitle>Add New Card</DialogTitle>
-                                <DialogClose asChild>
-                                    <Button variant="outline" className="absolute right-4 top-4">Close</Button>
-                                </DialogClose>
+                                <DialogTitle className="text-left text-base text-medium">Add New Card</DialogTitle>
                             </DialogHeader>
-                            <div className="p-4">Add card form (placeholder)</div>
+                            <div className="flex flex-col gap-4">
+                                <AddCardForm onSuccess={() => setOpen("")} onCancel={() => setOpen("")} />
+                            </div>
                         </DialogContent>
                     </Dialog>
                 )
@@ -618,28 +695,423 @@ export default function BillingSettingsPage() {
                     <Drawer open={true} onOpenChange={v => !v && setOpen("")}>
                         <DrawerContent>
                             <DrawerHeader>
-                                <DrawerTitle>Remove Card</DrawerTitle>
-                                <DrawerClose asChild>
-                                    <Button variant="outline" className="absolute right-4 top-4">Close</Button>
-                                </DrawerClose>
+                                <DrawerTitle className="text-left text-base text-medium">Remove Card</DrawerTitle>
                             </DrawerHeader>
-                            <div className="p-4">Remove card confirmation (placeholder)</div>
+                            <div className="p-4 flex flex-col gap-4">
+                                <RemoveCardConfirm
+                                    card={cards.find(c => c.id === selectedCardId)}
+                                    onSuccess={() => { setCards(cards.filter(c => c.id !== selectedCardId)); setOpen(""); }}
+                                    onCancel={() => setOpen("")}
+                                />
+                            </div>
                         </DrawerContent>
                     </Drawer>
                 ) : (
                     <Dialog open={true} onOpenChange={v => !v && setOpen("")}>
                         <DialogContent>
                             <DialogHeader>
-                                <DialogTitle>Remove Card</DialogTitle>
-                                <DialogClose asChild>
-                                    <Button variant="outline" className="absolute right-4 top-4">Close</Button>
-                                </DialogClose>
+                                <DialogTitle className="text-left text-base text-medium">Remove Card</DialogTitle>
                             </DialogHeader>
-                            <div className="p-4">Remove card confirmation (placeholder)</div>
+                            <div className="flex flex-col gap-4">
+                                <RemoveCardConfirm
+                                    card={cards.find(c => c.id === selectedCardId)}
+                                    onSuccess={() => { setCards(cards.filter(c => c.id !== selectedCardId)); setOpen(""); }}
+                                    onCancel={() => setOpen("")}
+                                />
+                            </div>
+                        </DialogContent>
+                    </Dialog>
+                )
+            )}
+            {/* Edit Card */}
+            {editCardId && (
+                isMobile ? (
+                    <Drawer open={true} onOpenChange={v => !v && setEditCardId(null)}>
+                        <DrawerContent>
+                            <DrawerHeader>
+                                <DrawerTitle className="text-left text-base text-medium">Edit Card</DrawerTitle>
+                            </DrawerHeader>
+                            <div className="p-4 flex flex-col gap-4">
+                                <EditCardForm
+                                    card={cards.find(c => c.id === editCardId)}
+                                    onSave={(updated: any) => {
+                                        setCards(cards.map(c => c.id === updated.id ? updated : c));
+                                        setEditCardId(null);
+                                    }}
+                                    onCancel={() => setEditCardId(null)}
+                                />
+                            </div>
+                        </DrawerContent>
+                    </Drawer>
+                ) : (
+                    <Dialog open={true} onOpenChange={v => !v && setEditCardId(null)}>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle className="text-left text-base text-medium">Edit Card</DialogTitle>
+                            </DialogHeader>
+                            <div className="flex flex-col gap-4">
+                                <EditCardForm
+                                    card={cards.find(c => c.id === editCardId)}
+                                    onSave={(updated: any) => {
+                                        setCards(cards.map(c => c.id === updated.id ? updated : c));
+                                        setEditCardId(null);
+                                    }}
+                                    onCancel={() => setEditCardId(null)}
+                                />
+                            </div>
                         </DialogContent>
                     </Dialog>
                 )
             )}
         </>
     )
+}
+
+// AddCardForm component
+function AddCardForm({ onSuccess, onCancel }: { onSuccess: () => void, onCancel: () => void }) {
+    const [form, setForm] = useState({
+        cardNumber: '',
+        expiry: '',
+        cvc: '',
+        name: ''
+    });
+    const cardTypeObj = getCardType(form.cardNumber);
+    const cardType = cardTypeObj ? cardTypeObj.name : '';
+    const cardBrandFile = cardTypeObj ? cardTypeObj.fileKey : '';
+    const cvvMaxLength = cardTypeObj ? cardTypeObj.cvvLength[0] : 4;
+    const [isCvvFocused, setIsCvvFocused] = useState(false);
+    const [cvvError, setCvvError] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const { t } = require('@/lib/i18n');
+    const [expiryError, setExpiryError] = useState('');
+    function validate() {
+        if (!/^\d{16}$/.test(form.cardNumber.replace(/\s/g, ''))) return 'Card number must be 16 digits';
+        if (!/^\d{2}\/\d{2}$/.test(form.expiry)) return 'Expiry must be MM/YY';
+        if (!/^\d{3,4}$/.test(form.cvc)) return 'CVC must be 3 or 4 digits';
+        if (!form.name.trim()) return 'Cardholder name required';
+        return '';
+    }
+    async function handleSubmit(e: React.FormEvent) {
+        e.preventDefault();
+        const err = validate();
+        if (err) { setError(err); return; }
+        setLoading(true);
+        setError('');
+        setTimeout(() => {
+            setLoading(false);
+            onSuccess();
+        }, 1200);
+    }
+    return (
+        <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+            <div className="space-y-2">
+                <Label>Cardholder Name</Label>
+                <Input
+                    value={form.name}
+                    onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                    placeholder="Name on card"
+                    autoComplete="cc-name"
+                />
+            </div>
+            <div className="space-y-2">
+                <Label>Card Number</Label>
+                <div className="relative">
+                    <Input
+                        value={form.cardNumber}
+                        onChange={e => {
+                            let val = e.target.value.replace(/[^\d]/g, '');
+                            if (val.length > 16) val = val.slice(0, 16);
+                            // Add space every 4 digits
+                            let formatted = val.replace(/(.{4})/g, '$1 ').trim();
+                            setForm(f => ({ ...f, cardNumber: formatted }));
+                        }}
+                        placeholder="1234 5678 9012 3456"
+                        maxLength={19}
+                        inputMode="numeric"
+                        autoComplete="cc-number"
+                        className="pr-16"
+                    />
+                    {cardBrandFile && (
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center text-xs text-muted-foreground">
+                            <CardBrandIcon brand={cardBrandFile} />
+                        </span>
+                    )}
+                </div>
+            </div>
+            <div className="flex w-full gap-3 justify-between">
+                <div className="space-y-2 w-full">
+                    <Label>Expiry</Label>
+                    <Input
+                        value={form.expiry}
+                        onChange={e => {
+                            let val = e.target.value.replace(/[^\d]/g, '');
+                            if (val.length > 4) val = val.slice(0, 4);
+                            if (val.length >= 1) {
+                                if (val[0] !== '0' && val[0] !== '1') val = '';
+                            }
+                            if (val.length >= 2) {
+                                let month = parseInt(val.slice(0, 2), 10);
+                                if (month < 1) month = 1;
+                                if (month > 12) month = 12;
+                                val = month.toString().padStart(2, '0') + val.slice(2);
+                            }
+                            // Yıl kontrolü
+                            let expiryErr = '';
+                            if (val.length >= 4) {
+                                const now = new Date();
+                                const currentYear = now.getFullYear() % 100;
+                                let year = parseInt(val.slice(2, 4), 10);
+                                if (year < currentYear) {
+                                    expiryErr = t('settings.billing.card.expiry_year_error');
+                                }
+                            }
+                            setExpiryError(expiryErr);
+                            let formatted = val;
+                            if (val.length > 2) formatted = val.slice(0, 2) + '/' + val.slice(2);
+                            else formatted = val;
+                            setForm(f => ({ ...f, expiry: formatted }));
+                        }}
+                        placeholder="MM/YY"
+                        maxLength={5}
+                        autoComplete="cc-exp"
+                        className={expiryError ? 'border-red-500 w-full' : 'w-full'}
+                    />
+                    {expiryError && <div className="text-destructive text-xs">{expiryError}</div>}
+                </div>
+                <div className="space-y-2 w-full">
+                    <Label>CVV</Label>
+                    <Input
+                        value={isCvvFocused ? form.cvc : (form.cvc ? '*'.repeat(form.cvc.length) : '')}
+                        onFocus={() => setIsCvvFocused(true)}
+                        onBlur={() => setIsCvvFocused(false)}
+                        onChange={e => {
+                            let val = e.target.value.replace(/[^\d]/g, '');
+                            if (val.length > cvvMaxLength) val = val.slice(0, cvvMaxLength);
+                            setForm(f => ({ ...f, cvc: val }));
+                            if (val.length > 0 && cardTypeObj && !cardTypeObj.cvvLength.includes(val.length)) {
+                                setCvvError('CVV length is not valid for this card type');
+                            } else {
+                                setCvvError('');
+                            }
+                        }}
+                        placeholder="CVC"
+                        maxLength={cvvMaxLength}
+                        autoComplete="cc-csc"
+                        className={cvvError ? 'border-red-500' : ''}
+                    />
+                    {cvvError && <div className="text-destructive text-xs">{cvvError}</div>}
+                </div>
+            </div>
+            {error && <div className="text-destructive text-sm">{error}</div>}
+            <div className="flex w-full gap-2">
+                <Button type="button" variant="outline" onClick={onCancel} disabled={loading} className="w-1/2">Cancel</Button>
+                <Button type="submit" disabled={loading || !!expiryError || !!cvvError} className="w-1/2">{loading ? 'Saving...' : 'Save Card'}</Button>
+            </div>
+        </form>
+    );
+}
+
+// RemoveCardConfirm component
+function RemoveCardConfirm({ card, onSuccess, onCancel }: { card: any, onSuccess: () => void, onCancel: () => void }) {
+    const [loading, setLoading] = useState(false);
+    if (!card) return <></>;
+    return (
+        <div className="flex flex-col gap-4">
+            <div className="flex items-center gap-3">
+                <CardBrandIcon brand={card.brand} />
+                <div className="font-medium">{card.brand.charAt(0).toUpperCase() + card.brand.slice(1)}</div>
+                <div className="text-sm text-muted-foreground">**** {card.last4}</div>
+                <div className="text-xs text-muted-foreground ml-2">Exp: {card.exp}</div>
+            </div>
+            <div className="text-base text-neutral-800">Are you sure you want to remove this card? This action cannot be undone.</div>
+            <div className="flex w-full gap-2">
+                <Button variant="outline" className="w-1/2" onClick={onCancel} disabled={loading}>Cancel</Button>
+                <Button variant="default" className="w-1/2" onClick={() => { setLoading(true); setTimeout(() => { setLoading(false); onSuccess(); }, 1200); }} disabled={loading}>
+                    {loading ? 'Removing...' : 'Remove Card'}
+                </Button>
+            </div>
+        </div>
+    );
+}
+
+// EditCardForm component
+function EditCardForm({ card, onSave, onCancel }: { card: any, onSave: (updated: any) => void, onCancel: () => void }) {
+    const [form, setForm] = useState({
+        name: card?.name || '',
+        number: card?.number || '',
+        exp: card?.exp || '',
+        cvv: card?.cvv || ''
+    });
+    const cardTypeObj = getCardType(form.number);
+    const cardType = cardTypeObj ? cardTypeObj.name : '';
+    const cardBrandFile = cardTypeObj ? cardTypeObj.fileKey : '';
+    const cvvMaxLength = cardTypeObj ? cardTypeObj.cvvLength[0] : 4;
+    const [isCvvFocused, setIsCvvFocused] = useState(false);
+    const [cvvError, setCvvError] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const { t } = require('@/lib/i18n');
+    const [expiryError, setExpiryError] = useState('');
+    if (!card) return <></>;
+    function validate() {
+        if (!form.name.trim()) return 'Cardholder name required';
+        if (!/^\d{2}\/\d{2}$/.test(form.exp)) return 'Expiry must be MM/YY';
+        return '';
+    }
+    function handleSubmit(e: React.FormEvent) {
+        e.preventDefault();
+        const err = validate();
+        if (err) { setError(err); return; }
+        setLoading(true);
+        setTimeout(() => {
+            setLoading(false);
+            onSave({ ...card, name: form.name, exp: form.exp });
+        }, 1000);
+    }
+    return (
+        <form className="flex flex-col gap-4 p-0" onSubmit={handleSubmit}>
+            <div className="space-y-2">
+                <Label>Cardholder Name</Label>
+                <Input
+                    value={form.name}
+                    onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                    placeholder="Name on card"
+                    autoComplete="cc-name"
+                />
+            </div>
+            <div className="space-y-2">
+                <Label>Card Number</Label>
+                <div className="relative">
+                    <Input
+                        value={form.number}
+                        onChange={e => {
+                            let val = e.target.value.replace(/[^\d]/g, '');
+                            if (val.length > 16) val = val.slice(0, 16);
+                            let formatted = val.replace(/(.{4})/g, '$1 ').trim();
+                            setForm(f => ({ ...f, number: formatted }));
+                        }}
+                        placeholder="1234 5678 9012 3456"
+                        maxLength={19}
+                        inputMode="numeric"
+                        autoComplete="cc-number"
+                        className="pr-16"
+                    />
+                    {cardBrandFile && (
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center text-xs text-muted-foreground">
+                            <CardBrandIcon brand={cardBrandFile} />
+                        </span>
+                    )}
+                </div>
+            </div>
+            <div className="flex w-full gap-3 justify-between">
+                <div className="space-y-2 w-full">
+                    <Label>Expiry</Label>
+                    <Input
+                        className={expiryError ? 'w-full border-red-500' : 'w-full'}
+                        value={form.exp}
+                        onChange={e => {
+                            let val = e.target.value.replace(/[^\d]/g, '');
+                            if (val.length > 4) val = val.slice(0, 4);
+                            // Ay kısmı
+                            if (val.length >= 1) {
+                                if (val[0] !== '0' && val[0] !== '1') val = '';
+                            }
+                            if (val.length >= 2) {
+                                let month = parseInt(val.slice(0, 2), 10);
+                                if (month < 1) month = 1;
+                                if (month > 12) month = 12;
+                                val = month.toString().padStart(2, '0') + val.slice(2);
+                            }
+                            // Yıl kontrolü
+                            let expiryErr = '';
+                            if (val.length >= 4) {
+                                const now = new Date();
+                                const currentYear = now.getFullYear() % 100;
+                                let year = parseInt(val.slice(2, 4), 10);
+                                if (year < currentYear) {
+                                    expiryErr = t('settings.billing.card.expiry_year_error');
+                                }
+                            }
+                            setExpiryError(expiryErr);
+                            // Otomatik / ekle
+                            let formatted = val;
+                            if (val.length > 2) formatted = val.slice(0, 2) + '/' + val.slice(2);
+                            else formatted = val;
+                            setForm(f => ({ ...f, exp: formatted }));
+                        }}
+                        placeholder="MM/YY"
+                        maxLength={5}
+                        autoComplete="cc-exp"
+                    />
+                    {expiryError && <div className="text-destructive text-xs">{expiryError}</div>}
+                </div>
+                <div className="space-y-2 w-full">
+                    <Label>CVV</Label>
+                    <Input
+                        className={cvvError ? 'w-full border-red-500' : 'w-full'}
+                        value={isCvvFocused ? form.cvv : (form.cvv ? '*'.repeat(form.cvv.length) : '')}
+                        onFocus={() => setIsCvvFocused(true)}
+                        onBlur={() => setIsCvvFocused(false)}
+                        onChange={e => {
+                            let val = e.target.value.replace(/[^\d]/g, '');
+                            if (val.length > cvvMaxLength) val = val.slice(0, cvvMaxLength);
+                            setForm(f => ({ ...f, cvv: val }));
+                            if (val.length > 0 && cardTypeObj && !cardTypeObj.cvvLength.includes(val.length)) {
+                                setCvvError('CVV length is not valid for this card type');
+                            } else {
+                                setCvvError('');
+                            }
+                        }}
+                        placeholder="CVV"
+                        maxLength={cvvMaxLength}
+                        autoComplete="cc-csc"
+                    />
+                    {cvvError && <div className="text-destructive text-xs">{cvvError}</div>}
+                </div>
+            </div>
+            {error && <div className="text-destructive text-sm">{error}</div>}
+            <div className="flex w-full gap-2">
+                <Button type="button" variant="outline" onClick={onCancel} disabled={loading} className="w-1/2">Cancel</Button>
+                <Button type="submit" disabled={loading || !!expiryError || !!cvvError} className="w-1/2">{loading ? 'Saving...' : 'Save Changes'}</Button>
+            </div>
+        </form>
+    );
+}
+
+// Add ExpandableBillingRow component
+function ExpandableBillingRow({ row }: { row: any }) {
+    const [open, setOpen] = useState(false);
+    return <>
+        <tr className="border-b last:border-0 cursor-pointer group" onClick={() => setOpen(o => !o)}>
+            <td className="py-2 whitespace-nowrap">
+                <span className="mr-1 flex">
+                    {open ? <IconChevronDown className="w-5 h-5 text-muted-foreground" /> : <IconChevronRight className="w-5 h-5 text-muted-foreground" />}
+                    {row.id}
+                </span>
+            </td>
+            <td className="py-2 whitespace-nowrap">{row.date}</td>
+            <td className="px-4 py-2 whitespace-nowrap">{row.plan}</td>
+            <td className="px-4 py-2 whitespace-nowrap">{row.amount}</td>
+            <td className="px-4 py-2 whitespace-nowrap flex items-center gap-2">
+                {row.pdf ? (
+                    <a href={row.pdf} target="_blank" rel="noopener noreferrer">
+                        <IconFileText className="w-6 h-6 hover:scale-110 transition" />
+                    </a>
+                ) : "-"}
+            </td>
+        </tr>
+        {open && (
+            <tr className="bg-muted-2">
+                <td colSpan={4} className="px-4 py-2">
+                    <div className="flex flex-col gap-1 text-xs">
+                        <div><span className="font-medium">Status:</span> {row.status}</div>
+                        <div><span className="font-medium">Invoice No:</span> {row.invoiceNo}</div>
+                        <div><span className="font-medium">Customer:</span> {row.customer}</div>
+                        <div><span className="font-medium">Payment Method:</span> {row.paymentMethod}</div>
+                    </div>
+                </td>
+            </tr>
+        )}
+    </>;
 } 

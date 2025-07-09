@@ -188,6 +188,11 @@
             "save": "Kaydet",
             "saving": "Kaydediliyor...",
             "success": "Güvenlik ayarları kaydedildi!"
+        },
+        "billing": {
+            "card": {
+                "expiry_year_error": "Son kullanma yılı geçmiş olamaz."
+            }
         }
     }
 }
