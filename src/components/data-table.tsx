@@ -1,7 +1,6 @@
 "use client"
 
 import * as React from "react"
-import { useVirtualizer } from "@tanstack/react-virtual"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -12,7 +11,7 @@ import {
   DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog"
-import { IconDotsVertical, IconPlus, IconChevronLeft, IconChevronRight, IconChevronsLeft, IconChevronsRight, IconLayoutColumns, IconArrowUp, IconChevronDown } from "@tabler/icons-react"
+import { IconDotsVertical, IconPlus, IconLayoutColumns } from "@tabler/icons-react"
 import { useState } from "react";
 
 export type DataTableColumn = {
@@ -47,12 +46,16 @@ export function DataTable({
 }: DataTableProps) {
   // State
   const [data, setData] = React.useState<any[]>(initialData)
+  React.useEffect(() => { setData(initialData) }, [initialData])
   const [search, setSearch] = React.useState("")
   const [page, setPage] = React.useState(0)
   const [pageSize, setPageSize] = React.useState(10)
-  const [visibleCols, setVisibleCols] = React.useState(() => initialColumns.map(c => c.key))
+  const [visibleCols, setVisibleCols] = React.useState(() => initialColumns.map(c => c.key));
+  React.useEffect(() => {
+    setVisibleCols(initialColumns.map(c => c.key));
+  }, [initialColumns]);
   const [modal, setModal] = React.useState<{ type: "add" | "edit", row?: any } | null>(null)
-  const [editingRow, setEditingRow] = React.useState<any | null>(null)
+  const [form, setForm] = React.useState<any>({})
 
   // Derived columns (with visibility)
   const columns = React.useMemo(() => initialColumns.filter(c => visibleCols.includes(c.key)), [initialColumns, visibleCols])
@@ -72,23 +75,6 @@ export function DataTable({
   const pageCount = Math.ceil(filtered.length / pageSize)
   const paged = React.useMemo(() => filtered.slice(page * pageSize, (page + 1) * pageSize), [filtered, page, pageSize])
 
-  // Virtualization
-  const parentRef = React.useRef<HTMLDivElement>(null)
-  const rowVirtualizer = useVirtualizer({
-    count: paged.length,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => rowHeight,
-    overscan: 8,
-  })
-
-  // Grid column widths (all columns equal width, always full width)
-  const colWidths = React.useMemo(() => {
-    if (columns.length === 0) return ""
-    return `repeat(${columns.length}, 1fr)`
-  }, [columns])
-
-  // Add/Edit modal form state
-  const [form, setForm] = React.useState<any>({})
   React.useEffect(() => {
     if (modal?.type === "edit" && modal.row) setForm({ ...modal.row })
     else if (modal?.type === "add") setForm({})
@@ -108,7 +94,6 @@ export function DataTable({
   }
 
   // Render
-  const router = typeof window !== "undefined" ? require("next/navigation").useRouter() : null;
   return (
     <div className="w-full flex flex-col gap-2">
       {/* Toolbar */}
@@ -139,148 +124,89 @@ export function DataTable({
         </div>
         <Button size="sm" className="gap-1" onClick={() => setModal({ type: "add" })}><IconPlus className="w-4 h-4" /> Yeni Ekle</Button>
       </div>
-      {/* Table */}
       {/* Masaüstü görünüm */}
       <div className="hidden md:block">
         <div className={`rounded-xl border border-[#ededed] bg-white w-full overflow-hidden shadow-none ${tableClassName}`} style={{ width: "100%", ...style }}>
-          <div className="min-w-full" ref={parentRef}>
-            {/* Header */}
-            <div
-              className="sticky top-0 z-20 border-b border-[#ededed] bg-[#f8f8f8]"
-              style={{
-                height: headerHeight,
-                display: "grid",
-                gridTemplateColumns: colWidths + " 48px",
-                alignItems: "center",
-                borderTopLeftRadius: 12,
-                borderTopRightRadius: 12,
-              }}
-            >
-              {columns.map((column, idx) => (
-                <div
-                  key={column.key}
-                  className={`px-6 py-3 text-xs font-medium uppercase tracking-normal text-[#222] select-none flex items-center h-full`}
-                  style={{
-                    minHeight: headerHeight,
-                    ...column.style,
-                    borderTopLeftRadius: idx === 0 ? 12 : undefined,
-                    borderTopRightRadius: idx === columns.length - 1 ? 12 : undefined,
-                    justifyContent: column.align === "center" ? "center" : column.align === "right" ? "flex-end" : "flex-start",
-                    textAlign: column.align || "left",
-                  }}
-                >
-                  {column.header}
-                </div>
-              ))}
-              {/* Empty cell for actions */}
-              <div />
-            </div>
-            {/* Rows */}
-            <div style={{ position: "relative", height: rowVirtualizer.getTotalSize() }}>
-              {rowVirtualizer.getVirtualItems().length === 0 && (
-                <div className="flex items-center justify-center h-60 text-muted-foreground text-sm w-full">
-                  {emptyText}
-                </div>
-              )}
-              {rowVirtualizer.getVirtualItems().map((row, idx) => {
-                const rowData = paged[row.index]
-                const isLast = row.index === rowVirtualizer.getVirtualItems().length - 1
-                return (
-                  <div
-                    key={row.index}
-                    className={`group transition-colors border-b border-[#f1f1f1] flex items-center ${isLast ? "rounded-b-xl" : ""} ${row.index % 2 === 0 ? "bg-white" : "bg-[#fafbfc]"} hover:bg-[#f5f5f5]`}
+          <table className="min-w-full">
+            <thead>
+              <tr>
+                {columns.map((column, idx) => (
+                  <th
+                    key={column.key}
+                    className="px-6 py-3 text-xs font-medium uppercase tracking-normal text-[#222] select-none"
                     style={{
-                      position: "absolute",
-                      top: row.start,
-                      left: 0,
-                      width: "100%",
-                      height: row.size,
-                      display: "grid",
-                      gridTemplateColumns: colWidths + " 48px",
-                      alignItems: "center",
+                      minHeight: headerHeight,
+                      ...column.style,
+                      textAlign: column.align || "left",
                     }}
                   >
-                    {columns.map((column, idx2) => (
-                      <div
+                    {column.header}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {paged.length === 0 ? (
+                <tr>
+                  <td colSpan={columns.length} className="text-center py-8 text-muted-foreground text-sm">{emptyText}</td>
+                </tr>
+              ) : (
+                paged.map((row, rowIdx) => (
+                  <tr key={row.id || rowIdx} className={rowIdx % 2 === 0 ? "bg-white" : "bg-[#fafbfc]"}>
+                    {columns.map((column, colIdx) => (
+                      <td
                         key={column.key}
-                        className={`px-6 py-3 text-sm flex items-center h-full overflow-hidden whitespace-nowrap text-ellipsis`}
+                        className="px-6 py-3 text-sm"
                         style={{
                           minHeight: rowHeight,
                           ...column.style,
-                          borderBottomLeftRadius: isLast && idx2 === 0 ? 12 : undefined,
-                          borderBottomRightRadius: isLast && idx2 === columns.length - 1 ? 12 : undefined,
-                          justifyContent: column.align === "center" ? "center" : column.align === "right" ? "flex-end" : "flex-start",
                           textAlign: column.align || "left",
                         }}
                       >
-                        {column.cell ? column.cell(rowData) : rowData[column.key]}
-                      </div>
+                        {column.cell ? column.cell(row) : row[column.key]}
+                      </td>
                     ))}
-                    {/* Row actions */}
-                    <div className="flex items-center justify-end pr-4">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="size-7"><IconDotsVertical className="w-4 h-4" /></Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => setModal({ type: "edit", row: rowData })}>Düzenle</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleDelete(rowData)} className="text-destructive">Sil</DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
       {/* Mobil görünüm: 4'ten fazla kolon varsa açılır panel */}
       <div className="block md:hidden">
-        <div className="min-w-full" ref={parentRef} style={{ width: "100%", ...style }}>
-          {/* Header */}
-          <div
-            className="sticky top-0 z-20 border-b border-[#ededed] bg-[#f8f8f8]"
-            style={{
-              height: headerHeight,
-              display: "grid",
-              gridTemplateColumns: `repeat(${Math.min(columns.length, 4)}, 1fr) 40px`,
-              alignItems: "center",
-              borderTopLeftRadius: 12,
-              borderTopRightRadius: 12,
-            }}
-          >
-            {columns.slice(0, 4).map((column, idx) => (
-              <div
-                key={column.key}
-                className={`px-4 py-3 text-xs font-medium uppercase tracking-normal text-[#222] select-none flex items-center h-full`}
-                style={{
-                  minHeight: headerHeight,
-                  ...column.style,
-                  borderTopLeftRadius: idx === 0 ? 12 : undefined,
-                  borderTopRightRadius: idx === 3 ? 12 : undefined,
-                  justifyContent: column.align === "center" ? "center" : column.align === "right" ? "flex-end" : "flex-start",
-                  textAlign: column.align || "left",
-                }}
-              >
-                {column.header}
+        <div className="min-w-full" style={{ width: "100%", ...style }}>
+          {paged.length === 0 ? (
+            <div className="flex items-center justify-center h-60 text-muted-foreground text-sm w-full">
+              {emptyText}
+            </div>
+          ) : (
+            paged.map((row, rowIdx) => (
+              <div key={row.id || rowIdx} className="border-b border-[#ededed] py-2">
+                {columns.slice(0, 4).map((column, colIdx) => (
+                  <div key={column.key} className="flex justify-between px-4 py-1">
+                    <span className="font-medium">{column.header}:</span>
+                    <span>{column.cell ? column.cell(row) : row[column.key]}</span>
+                  </div>
+                ))}
+                {columns.length > 4 && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm" className="mt-2">Diğer Bilgiler</Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start">
+                      {columns.slice(4).map((column) => (
+                        <DropdownMenuItem key={column.key}>
+                          <span className="font-medium">{column.header}:</span>
+                          <span className="ml-2">{column.cell ? column.cell(row) : row[column.key]}</span>
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
               </div>
-            ))}
-            {/* Empty cell for actions or expand */}
-            <div />
-          </div>
-          {/* Rows */}
-          <MobileRows
-            columns={columns}
-            paged={paged}
-            rowHeight={rowHeight}
-            rowVirtualizer={rowVirtualizer}
-            handleDelete={handleDelete}
-            setModal={setModal}
-            router={router}
-            emptyText={emptyText}
-            parentRef={parentRef}
-          />
+            ))
+          )}
         </div>
       </div>
       {/* Pagination */}
@@ -289,11 +215,11 @@ export function DataTable({
           {filtered.length === 0 ? "0" : page * pageSize + 1} - {Math.min((page + 1) * pageSize, filtered.length)} / {filtered.length} kayıt
         </div>
         <div className="flex items-center gap-1">
-          <Button variant="outline" size="icon" className="size-7" onClick={() => setPage(0)} disabled={page === 0}><IconChevronsLeft className="w-4 h-4" /></Button>
-          <Button variant="outline" size="icon" className="size-7" onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0}><IconChevronLeft className="w-4 h-4" /></Button>
+          <button className="size-7 border rounded" onClick={() => setPage(0)} disabled={page === 0}>{"<<"}</button>
+          <button className="size-7 border rounded" onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0}>{"<"}</button>
           <span className="text-xs px-2">{page + 1} / {pageCount || 1}</span>
-          <Button variant="outline" size="icon" className="size-7" onClick={() => setPage(p => Math.min(pageCount - 1, p + 1))} disabled={page >= pageCount - 1}><IconChevronRight className="w-4 h-4" /></Button>
-          <Button variant="outline" size="icon" className="size-7" onClick={() => setPage(pageCount - 1)} disabled={page >= pageCount - 1}><IconChevronsRight className="w-4 h-4" /></Button>
+          <button className="size-7 border rounded" onClick={() => setPage(p => Math.min(pageCount - 1, p + 1))} disabled={page >= pageCount - 1}>{">"}</button>
+          <button className="size-7 border rounded" onClick={() => setPage(pageCount - 1)} disabled={page >= pageCount - 1}>{">>"}</button>
           <select
             className="ml-2 border rounded px-1 py-0.5 text-xs bg-background"
             value={pageSize}
@@ -335,132 +261,4 @@ export function DataTable({
   )
 }
 
-// Mobilde açılır satırları gösteren yardımcı bileşen
-function MobileRows({ columns, paged, rowHeight, rowVirtualizer, handleDelete, setModal, router, emptyText, parentRef }: any) {
-  const [openRow, setOpenRow] = useState<number | null>(null);
-  if (columns.length <= 4) {
-    // 4 veya daha az kolon varsa klasik grid göster
-    return (
-      <div style={{ overflowY: "auto", maxHeight: parentRef?.current?.style?.maxHeight || undefined }}>
-        {rowVirtualizer.getVirtualItems().length === 0 && (
-          <div className="flex items-center justify-center h-60 text-muted-foreground text-sm w-full">
-            {emptyText}
-          </div>
-        )}
-        {rowVirtualizer.getVirtualItems().map((row: any, idx: number) => {
-          const rowData = paged[row.index];
-          const isLast = row.index === rowVirtualizer.getVirtualItems().length - 1;
-          return (
-            <div
-              key={row.index}
-              className={`group transition-colors border-b border-[#f1f1f1] flex items-center ${isLast ? "rounded-b-xl" : ""} ${row.index % 2 === 0 ? "bg-white" : "bg-[#fafbfc]"} hover:bg-[#f5f5f5]`}
-              style={{
-                display: "grid",
-                gridTemplateColumns: `repeat(${columns.length}, 1fr) 40px`,
-                alignItems: "center",
-                minHeight: rowHeight,
-              }}
-            >
-              {columns.map((column: any, idx2: number) => (
-                <div
-                  key={column.key}
-                  className={`px-4 py-3 text-sm flex items-center h-full overflow-hidden whitespace-nowrap text-ellipsis`}
-                  style={{
-                    minHeight: rowHeight,
-                    ...column.style,
-                    borderBottomLeftRadius: isLast && idx2 === 0 ? 12 : undefined,
-                    borderBottomRightRadius: isLast && idx2 === columns.length - 1 ? 12 : undefined,
-                    justifyContent: column.align === "center" ? "center" : column.align === "right" ? "flex-end" : "flex-start",
-                    textAlign: column.align || "left",
-                  }}
-                >
-                  {column.cell ? column.cell(rowData) : rowData[column.key]}
-                </div>
-              ))}
-              {/* Row actions */}
-              <div className="flex items-center justify-end pr-2">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="size-7"><IconDotsVertical className="w-4 h-4" /></Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => router && router.push && router.push(`/invoices/${rowData.id}/view`)}>Görüntüle</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setModal({ type: "edit", row: rowData })}>Düzenle</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleDelete(rowData)} className="text-destructive">Sil</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    );
-  }
-  // 4'ten fazla kolon varsa açılır panel
-  return (
-    <div style={{ overflowY: "auto", maxHeight: parentRef?.current?.style?.maxHeight || undefined }}>
-      {rowVirtualizer.getVirtualItems().length === 0 && (
-        <div className="flex items-center justify-center h-60 text-muted-foreground text-sm w-full">
-          {emptyText}
-        </div>
-      )}
-      {rowVirtualizer.getVirtualItems().map((row: any, idx: number) => {
-        const rowData = paged[row.index];
-        const isLast = row.index === rowVirtualizer.getVirtualItems().length - 1;
-        const expanded = openRow === row.index;
-        return (
-          <React.Fragment key={row.index}>
-            <div
-              className={`group transition-colors border-b border-[#f1f1f1] flex items-center ${isLast ? "rounded-b-xl" : ""} ${row.index % 2 === 0 ? "bg-white" : "bg-[#fafbfc]"} hover:bg-[#f5f5f5] cursor-pointer`}
-              style={{
-                display: "grid",
-                gridTemplateColumns: `repeat(4, 1fr) 40px`,
-                alignItems: "center",
-                minHeight: rowHeight,
-              }}
-              onClick={() => setOpenRow(expanded ? null : row.index)}
-            >
-              {columns.slice(0, 4).map((column: any, idx2: number) => (
-                <div
-                  key={column.key}
-                  className={`px-4 py-3 text-sm flex items-center h-full overflow-hidden whitespace-nowrap text-ellipsis`}
-                  style={{
-                    minHeight: rowHeight,
-                    ...column.style,
-                    borderBottomLeftRadius: isLast && idx2 === 0 ? 12 : undefined,
-                    borderBottomRightRadius: isLast && idx2 === 3 ? 12 : undefined,
-                    justifyContent: column.align === "center" ? "center" : column.align === "right" ? "flex-end" : "flex-start",
-                    textAlign: column.align || "left",
-                  }}
-                >
-                  {column.cell ? column.cell(rowData) : rowData[column.key]}
-                </div>
-              ))}
-              {/* Expand/collapse icon or row actions */}
-              <div className="flex items-center justify-end pr-2">
-                <Button variant="ghost" size="icon" className="size-7" tabIndex={-1} onClick={e => { e.stopPropagation(); setOpenRow(expanded ? null : row.index); }}>
-                  {expanded ? <IconChevronDown className="rotate-180 transition transition-3" /> : <IconChevronDown className="transition transition-3"/>}
-                </Button>
-              </div>
-            </div>
-            {expanded && (
-              <div className="bg-[#f8f8f8] border-b border-[#ededed] px-4 py-3 text-sm animate-fade-in">
-                {columns.slice(4).map((column: any) => (
-                  <div key={column.key} className="flex gap-2 py-1 border-b last:border-0 border-dashed border-muted-2">
-                    <span className="font-medium min-w-[110px] inline-block">{column.header}:</span>
-                    <span>{column.cell ? column.cell(rowData) : rowData[column.key]}</span>
-                  </div>
-                ))}
-                {/* Row actions (mobilde açılırda da göster) */}
-                <div className="flex gap-2 pt-2">
-                  <Button size="sm" variant="outline" onClick={() => setModal({ type: "edit", row: rowData })}>Düzenle</Button>
-                  <Button size="sm" variant="destructive" onClick={() => handleDelete(rowData)}>Sil</Button>
-                </div>
-              </div>
-            )}
-          </React.Fragment>
-        );
-      })}
-    </div>
-  );
-}
+export default DataTable;

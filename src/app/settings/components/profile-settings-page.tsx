@@ -8,6 +8,7 @@ import { Camera, Edit3, Shield, Trash2, Settings, Check, X, Eye, EyeOff } from "
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog"
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerClose } from "@/components/ui/drawer"
 import { t, getCurrentLang, type Locale } from '@/lib/i18n'
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 
 const initialLabels = {
     change_picture: '',
@@ -183,30 +184,28 @@ function ProfileAvatarCard({ labels }: { labels: typeof initialLabels }) {
     const [isModalOpen, setIsModalOpen] = useState(false)
     return (
         <>
-            <Card className="mb-6 border bg-background dark:bg-background">
-                <CardContent className="p-6 flex items-center gap-6">
-                    <div className="relative group">
-                        <Avatar className="w-20 h-20 border">
-                            <AvatarImage src="/avatars/shadcn.jpg" alt="User" />
-                            <AvatarFallback>U</AvatarFallback>
-                        </Avatar>
-                        <Button
-                            size="icon"
-                            variant="outline"
-                            className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 border"
-                            onClick={() => setIsModalOpen(true)}
-                            aria-label={labels.change_picture}
-                        >
-                            <Camera className="h-4 w-4" />
-                        </Button>
-                    </div>
-                    <div className="flex-1">
-                        <h2 className="font-bold text-xl text-foreground">Demo User</h2>
-                        <p className="text-muted-foreground mb-2">demo@company.com</p>
-                        <span className="inline-block text-xs text-muted-foreground border rounded px-2 py-0.5">{labels.active}</span>
-                    </div>
-                </CardContent>
-            </Card>
+            <div className="p-6 flex items-center gap-6">
+                <div className="relative group">
+                    <Avatar className="w-20 h-20 border">
+                        <AvatarImage src="/avatars/shadcn.jpg" alt="User" />
+                        <AvatarFallback>U</AvatarFallback>
+                    </Avatar>
+                    <Button
+                        size="icon"
+                        variant="outline"
+                        className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 border"
+                        onClick={() => setIsModalOpen(true)}
+                        aria-label={labels.change_picture}
+                    >
+                        <Camera className="h-4 w-4" />
+                    </Button>
+                </div>
+                <div className="flex-1">
+                    <h2 className="font-bold text-xl text-foreground">Demo User</h2>
+                    <p className="text-muted-foreground mb-2">demo@company.com</p>
+                    <span className="inline-block text-xs text-muted-foreground border rounded px-2 py-0.5">{labels.active}</span>
+                </div>
+            </div>
             <BottomSheetModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={labels.change_picture_title}>
                 <div className="flex flex-col items-center gap-6">
                     <Avatar className="w-24 h-24 border">
@@ -250,43 +249,39 @@ function ProfileInfoForm({ labels }: { labels: typeof initialLabels }) {
     const [isModalOpen, setIsModalOpen] = useState(false)
     return (
         <>
-            <Card className="mb-6 border bg-background dark:bg-background">
-                <CardHeader className="pb-4">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <CardTitle className="text-lg">{labels.personal_info}</CardTitle>
-                            <CardDescription>{labels.manage_personal_info}</CardDescription>
-                        </div>
-                        <Button variant="outline" size="sm" onClick={() => setIsModalOpen(true)}>
-                            <Edit3 className="h-4 w-4 mr-2" />{labels.edit}
-                        </Button>
+            <div className="pb-4">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <span className="text-lg font-semibold">{labels.personal_info}</span>
+                        <span className="block text-muted-foreground text-sm">{labels.manage_personal_info}</span>
                     </div>
-                </CardHeader>
-                <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label className="text-sm font-medium text-muted-foreground">{labels.name}</label>
-                            <p className="text-foreground mt-1">{form.name}</p>
-                        </div>
-                        <div>
-                            <label className="text-sm font-medium text-muted-foreground">{labels.email}</label>
-                            <p className="text-foreground mt-1">{form.email}</p>
-                        </div>
-                        <div>
-                            <label className="text-sm font-medium text-muted-foreground">{labels.phone}</label>
-                            <p className="text-foreground mt-1">{form.phone}</p>
-                        </div>
-                        <div>
-                            <label className="text-sm font-medium text-muted-foreground">{labels.language}</label>
-                            <p className="text-foreground mt-1">{form.lang === 'tr' ? 'Türkçe' : 'English'}</p>
-                        </div>
-                        <div className="md:col-span-2">
-                            <label className="text-sm font-medium text-muted-foreground">{labels.bio}</label>
-                            <p className="text-foreground mt-1">{form.bio}</p>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
+                    <Button variant="outline" size="sm" onClick={() => setIsModalOpen(true)}>
+                        <Edit3 className="h-4 w-4 mr-2" />{labels.edit}
+                    </Button>
+                </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label className="text-sm font-medium text-muted-foreground">{labels.name}</label>
+                    <p className="text-foreground mt-1">{form.name}</p>
+                </div>
+                <div>
+                    <label className="text-sm font-medium text-muted-foreground">{labels.email}</label>
+                    <p className="text-foreground mt-1">{form.email}</p>
+                </div>
+                <div>
+                    <label className="text-sm font-medium text-muted-foreground">{labels.phone}</label>
+                    <p className="text-foreground mt-1">{form.phone}</p>
+                </div>
+                <div>
+                    <label className="text-sm font-medium text-muted-foreground">{labels.language}</label>
+                    <p className="text-foreground mt-1">{form.lang === 'tr' ? 'Türkçe' : 'English'}</p>
+                </div>
+                <div className="md:col-span-2">
+                    <label className="text-sm font-medium text-muted-foreground">{labels.bio}</label>
+                    <p className="text-foreground mt-1">{form.bio}</p>
+                </div>
+            </div>
             <BottomSheetModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={labels.edit_personal_info}>
                 <form className="space-y-4">
                     <div>
@@ -362,39 +357,35 @@ function ProfilePasswordForm({ labels }: { labels: typeof initialLabels }) {
     })
     return (
         <>
-            <Card className="mb-6 border bg-background dark:bg-background">
-                <CardHeader className="pb-4">
-                    <div className="flex flex-row items-center justify-between gap-x-4">
-                        <div className="flex-1 min-w-0">
-                            <CardTitle className="text-lg">{labels.password_security}</CardTitle>
-                            <CardDescription>{labels.manage_security}</CardDescription>
-                        </div>
-                        <Button variant="outline" size="sm" onClick={() => setIsModalOpen(true)}>
-                            <Shield className="h-4 w-4 mr-2" />{labels.change_password}
+            <div className="pb-4">
+                <div className="flex flex-row items-center justify-between gap-x-4">
+                    <div className="flex-1 min-w-0">
+                        <span className="text-lg font-semibold">{labels.password_security}</span>
+                        <span className="block text-muted-foreground text-sm">{labels.manage_security}</span>
+                    </div>
+                    <Button variant="outline" size="sm" onClick={() => setIsModalOpen(true)}>
+                        <Shield className="h-4 w-4 mr-2" />{labels.change_password}
+                    </Button>
+                </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label className="text-sm font-medium text-muted-foreground">{labels.last_login}</label>
+                    <p className="text-foreground mt-1">2024-06-01 12:34</p>
+                </div>
+                <div>
+                    <label className="text-sm font-medium text-muted-foreground">2FA</label>
+                    <span className="inline-block text-xs text-muted-foreground border rounded px-2 py-0.5 mt-1">{labels.active}</span>
+                </div>
+                <div>
+                    <div className="flex items-center justify-between gap-x-2">
+                        <label className="text-sm font-medium text-muted-foreground">{labels.sessions}</label>
+                        <Button variant="outline" size="sm" className="mt-1">
+                            <Settings className="h-4 w-4 mr-2" />{labels.manage}
                         </Button>
                     </div>
-                </CardHeader>
-                <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                            <label className="text-sm font-medium text-muted-foreground">{labels.last_login}</label>
-                            <p className="text-foreground mt-1">2024-06-01 12:34</p>
-                        </div>
-                        <div>
-                            <label className="text-sm font-medium text-muted-foreground">2FA</label>
-                            <span className="inline-block text-xs text-muted-foreground border rounded px-2 py-0.5 mt-1">{labels.active}</span>
-                        </div>
-                        <div>
-                            <div className="flex items-center justify-between gap-x-2">
-                                <label className="text-sm font-medium text-muted-foreground">{labels.sessions}</label>
-                                <Button variant="outline" size="sm" className="mt-1">
-                                    <Settings className="h-4 w-4 mr-2" />{labels.manage}
-                                </Button>
-                            </div>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
+                </div>
+            </div>
             <BottomSheetModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={labels.change_password_title}>
                 <form className="space-y-4" onSubmit={e => { e.preventDefault(); setIsModalOpen(false) }}>
                     <div>
@@ -494,30 +485,26 @@ function ProfileDangerZone({ labels }: { labels: typeof initialLabels }) {
     const [confirmText, setConfirmText] = useState("")
     return (
         <>
-            <Card className="border bg-background dark:bg-background">
-                <CardHeader>
-                    <CardTitle className="text-lg text-destructive flex items-center gap-2">
-                        <Trash2 className="h-5 w-5" />{labels.danger_zone}
-                    </CardTitle>
-                    <CardDescription className="text-muted-foreground">
-                        {labels.danger_zone_desc}
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                        <div>
-                            <h3 className="font-medium text-destructive">{labels.delete_account}</h3>
-                            <p className="text-sm text-muted-foreground">{labels.delete_account_desc}</p>
-                        </div>
-                        <Button
-                            variant="destructive"
-                            onClick={() => setIsModalOpen(true)}
-                        >
-                            <Trash2 className="h-4 w-4 mr-2" />{labels.delete_account}
-                        </Button>
-                    </div>
-                </CardContent>
-            </Card>
+            <div>
+                <div className="text-lg text-destructive flex items-center gap-2">
+                    <Trash2 className="h-5 w-5" />{labels.danger_zone}
+                </div>
+                <div className="text-muted-foreground">
+                    {labels.danger_zone_desc}
+                </div>
+            </div>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h3 className="font-medium text-destructive">{labels.delete_account}</h3>
+                    <p className="text-sm text-muted-foreground">{labels.delete_account_desc}</p>
+                </div>
+                <Button
+                    variant="destructive"
+                    onClick={() => setIsModalOpen(true)}
+                >
+                    <Trash2 className="h-4 w-4 mr-2" />{labels.delete_account}
+                </Button>
+            </div>
             <BottomSheetModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={labels.delete_account}>
                 <div className="space-y-4">
                     <div className="bg-muted border rounded-lg p-4">
@@ -570,10 +557,65 @@ export default function ProfileSettingsPage() {
 
     return (
         <div className="w-full mx-auto">
-            <ProfileAvatarCard labels={labels} />
-            <ProfileInfoForm labels={labels} />
-            <ProfilePasswordForm labels={labels} />
-            <ProfileDangerZone labels={labels} />
+            {/* Mobil Accordion */}
+            <div className="md:hidden flex flex-col">
+                <Accordion type="single" collapsible className="w-full space-y-4" defaultValue="avatar">
+                    <AccordionItem value="avatar" className="p-0 border-none bg-transparent">
+                        <Card className="rounded-xl shadow-md">
+                            <CardHeader className="p-0 m-0 h-[20px]">
+                                <AccordionTrigger className="px-4 m-0 py-0 text-base font-semibold">
+                                    {labels.change_picture_title}
+                                </AccordionTrigger>
+                            </CardHeader>
+                            <AccordionContent asChild>
+                                <CardContent className="grid grid-cols-1 gap-2 px-4 py-3">
+                                    <ProfileAvatarCard labels={labels} />
+                                </CardContent>
+                            </AccordionContent>
+                        </Card>
+                    </AccordionItem>
+                    <AccordionItem value="info" className="p-0 border-none bg-transparent">
+                        <Card className="rounded-xl shadow-md">
+                            <CardHeader className="p-0 m-0 h-[20px]">
+                                <AccordionTrigger className="px-4 m-0 py-0 text-base font-semibold">
+                                    {labels.personal_info}
+                                </AccordionTrigger>
+                            </CardHeader>
+                            <AccordionContent asChild>
+                                <CardContent className="grid grid-cols-1 gap-2 px-4 py-3">
+                                    <ProfileInfoForm labels={labels} />
+                                </CardContent>
+                            </AccordionContent>
+                        </Card>
+                    </AccordionItem>
+                    <AccordionItem value="password" className="p-0 border-none bg-transparent">
+                        <Card className="rounded-xl shadow-md">
+                            <CardHeader className="p-0 m-0 h-[20px]">
+                                <AccordionTrigger className="px-4 m-0 py-0 text-base font-semibold">
+                                    {labels.password_security || "Şifre & Güvenlik"}
+                                </AccordionTrigger>
+                            </CardHeader>
+                            <AccordionContent asChild>
+                                <CardContent className="grid grid-cols-1 gap-2 px-4 py-3">
+                                    <ProfilePasswordForm labels={labels} />
+                                </CardContent>
+                            </AccordionContent>
+                        </Card>
+                    </AccordionItem>
+                </Accordion>
+            </div>
+            {/* Masaüstü Kartlar */}
+            <div className="hidden md:block">
+                <Card className="mb-6 border bg-background dark:bg-background">
+                    <ProfileAvatarCard labels={labels} />
+                </Card>
+                <Card className="mb-6 px-4 border bg-background dark:bg-background">
+                    <ProfileInfoForm labels={labels} />
+                </Card>
+                <Card className="mb-6 px-4 border bg-background dark:bg-background">
+                    <ProfilePasswordForm labels={labels} />
+                </Card>
+            </div>
         </div>
     );
 }

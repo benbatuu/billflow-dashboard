@@ -35,11 +35,8 @@ const menuItems = [
   { label: 'subscriptions', href: '/subscriptions', icon: IconFileText, roles: ['admin', 'owner'] },
   { label: 'payments', href: '/payments', icon: IconCreditCard, roles: ['admin', 'owner', 'staff'] },
   { label: 'reports', href: '/reports', icon: IconReport, roles: ['admin', 'owner', 'staff', 'viewer'] },
-  { label: 'notifications', href: '/notifications', icon: IconBell, roles: ['admin', 'owner'] },
-  { label: 'team', href: '/team', icon: IconUsers, roles: ['admin', 'owner', 'staff'] },
-  { label: 'settings', href: '/settings', icon: IconSettings, roles: ['admin', 'owner'] },
-  { label: 'integrations', href: '/integrations', icon: IconPlug, roles: ['admin', 'owner'] },
   { label: 'support', href: '/support', icon: IconHelp, roles: ['admin', 'owner', 'staff', 'viewer'] },
+  { label: 'settings', href: '/settings', icon: IconSettings, roles: ['admin', 'owner'] },
 ]
 
 function getUserRole() {

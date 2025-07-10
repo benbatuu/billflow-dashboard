@@ -14,6 +14,7 @@ import { t, getCurrentLang } from '@/lib/i18n';
 import { IconEdit, IconTrash } from "@tabler/icons-react";
 import { IconFileText, IconChevronDown, IconChevronRight } from "@tabler/icons-react";
 import { DataTable, DataTableColumn } from "@/components/data-table";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 
 const planFeatures = [
     { label: "User Limit", value: "10" },
@@ -22,9 +23,9 @@ const planFeatures = [
 ]
 // Billing history mock data (randomized)
 const pdfOptions = [
-  '/invoices/invoice-20240601.pdf',
-  '/invoices/invoice-20240501.pdf',
-  '/invoices/invoice-20240401.pdf'
+    '/invoices/invoice-20240601.pdf',
+    '/invoices/invoice-20240501.pdf',
+    '/invoices/invoice-20240401.pdf'
 ];
 
 const plansMock: string[] = ['Pro', 'Business', 'Enterprise'];
@@ -32,64 +33,64 @@ const amountsMock: Record<string, string> = { 'Pro': '$29', 'Business': '$99', '
 const statuses = ['Paid', 'Pending', 'Failed'];
 const customers = ['Acme Inc.', 'Globex Corp.', 'Soylent LLC', 'Initech', 'Umbrella Corp.'];
 const paymentMethods = [
-  'Visa **** 4242', 
-  'Mastercard **** 1234', 
-  'Amex **** 5678',
-  'PayPal',
-  'Bank Transfer'
+    'Visa **** 4242',
+    'Mastercard **** 1234',
+    'Amex **** 5678',
+    'PayPal',
+    'Bank Transfer'
 ];
 
 function getRandomDate() {
-  const start = new Date(2023, 0, 1);
-  const end = new Date(2024, 6, 1);
-  const randomDate = new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
-  return randomDate.toISOString().slice(0, 10);
+    const start = new Date(2023, 0, 1);
+    const end = new Date(2024, 6, 1);
+    const randomDate = new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
+    return randomDate.toISOString().slice(0, 10);
 }
 
 function getRandomItem<T>(arr: T[]): T {
-  return arr[Math.floor(Math.random() * arr.length)];
+    return arr[Math.floor(Math.random() * arr.length)];
 }
 
 type BillingHistoryRow = {
-  date: string;
-  plan: string;
-  amount: string;
-  status: string;
-  invoiceNo: string;
-  customer: string;
-  paymentMethod: string;
-  pdf: string;
+    date: string;
+    plan: string;
+    amount: string;
+    status: string;
+    invoiceNo: string;
+    customer: string;
+    paymentMethod: string;
+    pdf: string;
 };
 const billingHistory: BillingHistoryRow[] = [];
 const datesUsed: { [date: string]: boolean } = {};
 
 for (let i = 1; i <= 50; i++) {
-  let date;
-  if (Math.random() < 0.6 && Object.keys(datesUsed).length > 0) {
-    // %60 ihtimalle daha önceki bir tarihi tekrar kullan (aynı gün birden fazla fatura için)
-    date = getRandomItem(Object.keys(datesUsed));
-  } else {
-    date = getRandomDate();
-  }
-  datesUsed[date] = true;
+    let date;
+    if (Math.random() < 0.6 && Object.keys(datesUsed).length > 0) {
+        // %60 ihtimalle daha önceki bir tarihi tekrar kullan (aynı gün birden fazla fatura için)
+        date = getRandomItem(Object.keys(datesUsed));
+    } else {
+        date = getRandomDate();
+    }
+    datesUsed[date] = true;
 
-  const plan = getRandomItem(plansMock);
-  const amount = amountsMock[plan];
-  const status = getRandomItem(statuses);
-  const customer = getRandomItem(customers);
-  const paymentMethod = getRandomItem(paymentMethods);
-  const pdf = getRandomItem(pdfOptions);
+    const plan = getRandomItem(plansMock);
+    const amount = amountsMock[plan];
+    const status = getRandomItem(statuses);
+    const customer = getRandomItem(customers);
+    const paymentMethod = getRandomItem(paymentMethods);
+    const pdf = getRandomItem(pdfOptions);
 
-  billingHistory.push({
-    date,
-    plan,
-    amount,
-    status,
-    invoiceNo: `INV-${date.replace(/-/g, '')}-${i}`,
-    customer,
-    paymentMethod,
-    pdf
-  });
+    billingHistory.push({
+        date,
+        plan,
+        amount,
+        status,
+        invoiceNo: `INV-${date.replace(/-/g, '')}-${i}`,
+        customer,
+        paymentMethod,
+        pdf
+    });
 }
 
 // 1. Update plans array to include both priceMonthly and priceAnnual
@@ -381,24 +382,24 @@ function getCardType(number: string) {
 
 // Billing History DataTable columns
 const billingColumns: DataTableColumn[] = [
-  { key: "date", header: "Date", width: 120, align: "left" },
-  { key: "plan", header: "Plan", width: 100, align: "left" },
-  { key: "amount", header: "Amount", width: 80, align: "right" },
-  { key: "status", header: "Status", width: 100, align: "center" },
-  { key: "invoiceNo", header: "Invoice No", width: 140, align: "left" },
-  { key: "customer", header: "Customer", width: 160, align: "left" },
-  { key: "paymentMethod", header: "Payment Method", width: 140, align: "left" },
-  {
-    key: "pdf",
-    header: "Invoice PDF",
-    width: 80,
-    align: "center",
-    cell: (row) => row.pdf ? (
-      <a href={row.pdf} target="_blank" rel="noopener noreferrer">
-        <IconFileText className="w-6 h-6 hover:scale-110 transition" />
-      </a>
-    ) : "-"
-  },
+    { key: "date", header: "Date", width: 120, align: "left" },
+    { key: "plan", header: "Plan", width: 100, align: "left" },
+    { key: "amount", header: "Amount", width: 80, align: "right" },
+    { key: "status", header: "Status", width: 100, align: "center" },
+    { key: "invoiceNo", header: "Invoice No", width: 140, align: "left" },
+    { key: "customer", header: "Customer", width: 160, align: "left" },
+    { key: "paymentMethod", header: "Payment Method", width: 140, align: "left" },
+    {
+        key: "pdf",
+        header: "Invoice PDF",
+        width: 80,
+        align: "center",
+        cell: (row) => row.pdf ? (
+            <a href={row.pdf} target="_blank" rel="noopener noreferrer">
+                <IconFileText className="w-6 h-6 hover:scale-110 transition" />
+            </a>
+        ) : "-"
+    },
 ];
 
 export default function BillingSettingsPage() {
@@ -466,105 +467,123 @@ export default function BillingSettingsPage() {
 
     return (
         <>
-            {/* Mobile Cards */}
-            <div className="md:hidden flex flex-col gap-4">
-                {/* Current Subscription Plan */}
-                <Card className="rounded-xl shadow-md">
-                    <CardHeader>
-                        <CardTitle>Current Subscription Plan</CardTitle>
-                        <CardDescription>Your active plan and features</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-lg font-semibold">Pro</div>
-                        <div className="text-sm text-muted-foreground mb-2">Billed yearly • Next renewal: 2025-06-01</div>
-                        <ul className="text-sm mb-2">
-                            {planFeatures.map(f => (
-                                <li key={f.label} className="flex items-center gap-2">
-                                    <span className="font-medium">{f.label}:</span> {f.value}
-                                </li>
-                            ))}
-                        </ul>
-                        <div className="flex flex-col gap-2 mt-2">
-                            <Button variant="outline" onClick={() => setOpen("plan")}>Change Plan</Button>
-                            <Button variant="outline" onClick={() => setOpen("cancel")}>Cancel Subscription</Button>
-                        </div>
-                    </CardContent>
-                </Card>
-                {/* Payment Method */}
-                <Card className="rounded-xl shadow-md">
-                    <CardHeader>
-                        <CardTitle>Payment Method</CardTitle>
-                        <CardDescription>Manage your saved cards</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="flex flex-col gap-3">
-                            {cards.map(card => (
-                                <div key={card.id} className="border rounded-lg px-4 py-2 bg-muted w-full">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3 min-w-0">
-                                            <CardBrandIcon brand={card.brand} />
-                                            <div className="font-medium truncate">{card.brand.charAt(0).toUpperCase() + card.brand.slice(1)}</div>
-                                        </div>
-                                        <div className="flex items-center gap-1 flex-shrink-0 md:gap-2 md:mb-0 mb-1">
-                                            <Button size="sm" variant="outline" onClick={() => { setEditCardId(card.id); }} className="hover:cursor-pointer p-1 md:p-2"><IconEdit className="w-8 h-8" /></Button>
-                                            <Button size="sm" variant="outline" onClick={() => { setSelectedCardId(card.id); setOpen("removeCard"); }} className="hover:cursor-pointer p-1 md:p-2"><IconTrash className="w-8 h-8" /></Button>
-                                        </div>
+            {/* Mobile Accordion */}
+            <div className="md:hidden flex flex-col">
+                <Accordion type="single" collapsible className="w-full space-y-4" defaultValue="plan">
+                    {/* Current Subscription Plan */}
+                    <AccordionItem value="plan" className="p-0 border-none bg-transparent">
+                        <Card className="rounded-xl shadow-md">
+                            <CardHeader className="p-0 m-0 h-[20px]">
+                                <AccordionTrigger className="px-4 m-0 py-0 text-base font-semibold">
+                                    Current Subscription Plan
+                                </AccordionTrigger>
+                            </CardHeader>
+                            <AccordionContent asChild>
+                                <CardContent className="grid grid-cols-1 gap-2 px-4 py-3">
+                                    <div className="text-lg font-semibold">Pro</div>
+                                    <div className="text-sm text-muted-foreground mb-2">Billed yearly • Next renewal: 2025-06-01</div>
+                                    <ul className="text-sm mb-2">
+                                        {planFeatures.map(f => (
+                                            <li key={f.label} className="flex items-center gap-2">
+                                                <span className="font-medium">{f.label}:</span> {f.value}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                    <div className="flex flex-col gap-2 mt-2">
+                                        <Button variant="outline" onClick={() => setOpen("plan")}>Change Plan</Button>
+                                        <Button variant="outline" onClick={() => setOpen("cancel")}>Cancel Subscription</Button>
                                     </div>
-                                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground pl-10 mt-1">
-                                        <span>{card.name}</span>
-                                        <span>• **** {card.last4}</span>
-                                        <span>• Exp: {card.exp}</span>
+                                </CardContent>
+                            </AccordionContent>
+                        </Card>
+                    </AccordionItem>
+                    {/* Payment Method */}
+                    <AccordionItem value="payment" className="p-0 border-none bg-transparent">
+                        <Card className="rounded-xl shadow-md">
+                            <CardHeader className="p-0 m-0 h-[20px]">
+                                <AccordionTrigger className="px-4 m-0 py-0 text-base font-semibold">
+                                    Payment Method
+                                </AccordionTrigger>
+                            </CardHeader>
+                            <AccordionContent asChild>
+                                <CardContent className="grid grid-cols-1 gap-2 px-4 py-3">
+                                    <div className="flex flex-col gap-3">
+                                        {cards.map(card => (
+                                            <div key={card.id} className="border rounded-lg px-4 py-2 bg-muted w-full">
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-3 min-w-0">
+                                                        <CardBrandIcon brand={card.brand} />
+                                                        <div className="font-medium truncate">{card.brand.charAt(0).toUpperCase() + card.brand.slice(1)}</div>
+                                                    </div>
+                                                    <div className="flex items-center gap-1 flex-shrink-0 md:gap-2 md:mb-0 mb-1">
+                                                        <Button size="sm" variant="outline" onClick={() => { setEditCardId(card.id); }} className="hover:cursor-pointer p-1 md:p-2"><IconEdit className="w-8 h-8" /></Button>
+                                                        <Button size="sm" variant="outline" onClick={() => { setSelectedCardId(card.id); setOpen("removeCard"); }} className="hover:cursor-pointer p-1 md:p-2"><IconTrash className="w-8 h-8" /></Button>
+                                                    </div>
+                                                </div>
+                                                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground pl-10 mt-1">
+                                                    <span>{card.name}</span>
+                                                    <span>• **** {card.last4}</span>
+                                                    <span>• Exp: {card.exp}</span>
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
-                                </div>
-                            ))}
-                        </div>
-                        <div className="flex flex-col gap-2 mt-4">
-                            <Button variant="outline" onClick={() => setOpen("addCard")}>Add New Card</Button>
-                        </div>
-                    </CardContent>
-                </Card>
-                {/* Billing Details */}
-                <Card className="rounded-xl shadow-md">
-                    <CardHeader>
-                        <CardTitle>Billing Details</CardTitle>
-                        <CardDescription>Invoice and tax information</CardDescription>
-                    </CardHeader>
-                    <CardContent className="grid grid-cols-1 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Billing Name</label>
-                            <Input value={form.billingName} onChange={e => setForm(f => ({ ...f, billingName: e.target.value }))} placeholder="Company or Person" />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Billing Address</label>
-                            <Input value={form.billingAddress} onChange={e => setForm(f => ({ ...f, billingAddress: e.target.value }))} placeholder="Address" />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Tax Number</label>
-                            <Input value={form.taxNumber} onChange={e => setForm(f => ({ ...f, taxNumber: e.target.value }))} placeholder="Tax Number (optional)" />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Invoice Email</label>
-                            <Input value={form.invoiceEmail} onChange={e => setForm(f => ({ ...f, invoiceEmail: e.target.value }))} placeholder="Email for invoices" />
-                        </div>
-                        <div className="flex justify-end w-full mt-2">
-                            <Button variant="outline">Save Billing Details</Button>
-                        </div>
-                    </CardContent>
-                </Card>
-                {/* Billing History / Invoices */}
-                <Card className="rounded-xl shadow-md">
-                    <CardHeader>
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 w-full">
-                            <div>
-                                <CardTitle>Billing History</CardTitle>
-                                <CardDescription>All your paid invoices</CardDescription>
-                            </div>
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <DataTable data={billingHistory} columns={billingColumns} rowHeight={48} headerHeight={48} emptyText="No invoices found." />
-                    </CardContent>
-                </Card>
+                                    <div className="flex flex-col gap-2 mt-4">
+                                        <Button variant="outline" onClick={() => setOpen("addCard")}>Add New Card</Button>
+                                    </div>
+                                </CardContent>
+                            </AccordionContent>
+                        </Card>
+                    </AccordionItem>
+                    {/* Billing Details */}
+                    <AccordionItem value="details" className="p-0 border-none bg-transparent">
+                        <Card className="rounded-xl shadow-md">
+                            <CardHeader className="p-0 m-0 h-[20px]">
+                                <AccordionTrigger className="px-4 m-0 py-0 text-base font-semibold">
+                                    Billing Details
+                                </AccordionTrigger>
+                            </CardHeader>
+                            <AccordionContent asChild>
+                                <CardContent className="grid grid-cols-1 gap-4 px-4 py-3">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1">Billing Name</label>
+                                        <Input value={form.billingName} onChange={e => setForm(f => ({ ...f, billingName: e.target.value }))} placeholder="Company or Person" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1">Billing Address</label>
+                                        <Input value={form.billingAddress} onChange={e => setForm(f => ({ ...f, billingAddress: e.target.value }))} placeholder="Address" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1">Tax Number</label>
+                                        <Input value={form.taxNumber} onChange={e => setForm(f => ({ ...f, taxNumber: e.target.value }))} placeholder="Tax Number (optional)" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1">Invoice Email</label>
+                                        <Input value={form.invoiceEmail} onChange={e => setForm(f => ({ ...f, invoiceEmail: e.target.value }))} placeholder="Email for invoices" />
+                                    </div>
+                                    <div className="flex justify-end w-full mt-2">
+                                        <Button variant="outline">Save Billing Details</Button>
+                                    </div>
+                                </CardContent>
+                            </AccordionContent>
+                        </Card>
+                    </AccordionItem>
+                    {/* Billing History / Invoices */}
+                    <AccordionItem value="history" className="p-0 border-none bg-transparent">
+                        <Card className="rounded-xl shadow-md">
+                            <CardHeader className="p-0 m-0 h-[20px]">
+                                <AccordionTrigger className="px-4 m-0 py-0 text-base font-semibold">
+                                    Billing History
+                                </AccordionTrigger>
+                            </CardHeader>
+                            <AccordionContent asChild>
+                                <CardContent className="px-4 py-3">
+                                    <DataTable data={billingHistory} columns={billingColumns} rowHeight={48} headerHeight={48} emptyText="No invoices found." />
+                                </CardContent>
+                            </AccordionContent>
+                        </Card>
+                    </AccordionItem>
+                </Accordion>
             </div>
             {/* Desktop Cards */}
             <div className="hidden md:flex flex-col gap-6">
