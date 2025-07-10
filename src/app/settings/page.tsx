@@ -23,17 +23,16 @@ import NotificationsSettingsPage from "./components/notifications-settings-page"
 import TeamSettingsPage from "./components/team-settings-page"
 import IntegrationsSettingsPage from "./components/integrations-settings-page"
 import SecuritySettingsPage from "./components/security-settings-page"
-// --- END Settings Forms ---
 
 const allTabs = [
-    { key: "profile", label: "settings.sidebar.profile", roles: ["admin", "owner", "staff", "viewer"], component: ProfileSettingsPage, icon: IconUser },
-    { key: "company", label: "settings.sidebar.company", roles: ["admin", "owner"], component: CompanySettingsPage, icon: IconBuilding },
-    { key: "billing", label: "settings.sidebar.billing", roles: ["admin", "owner"], component: BillingSettingsPage, icon: IconCreditCard },
-    { key: "invoices", label: "settings.sidebar.invoices", roles: ["admin", "owner"], component: InvoicesSettingsPage, icon: IconFileInvoice },
-    { key: "notifications", label: "settings.sidebar.notifications", roles: ["owner", "staff"], component: NotificationsSettingsPage, icon: IconBell },
-    { key: "team", label: "settings.sidebar.team", roles: ["admin", "owner"], component: TeamSettingsPage, icon: IconUsers },
-    { key: "integrations", label: "settings.sidebar.integrations", roles: ["admin", "owner"], component: IntegrationsSettingsPage, icon: IconPlug },
-    { key: "security", label: "settings.sidebar.security", roles: ["admin", "owner", "staff", "viewer"], component: SecuritySettingsPage, icon: IconShieldLock },
+    { key: "profile", label: "settings.sidebar.profile", roles: ["admin", "owner", "staff", "viewer"], component: ProfileSettingsPage, icon: IconUser, href: "/settings/profile" },
+    { key: "company", label: "settings.sidebar.company", roles: ["admin", "owner"], component: CompanySettingsPage, icon: IconBuilding, href: "/settings/company" },
+    { key: "billing", label: "settings.sidebar.billing", roles: ["admin", "owner"], component: BillingSettingsPage, icon: IconCreditCard, href: "/settings/billing" },
+    { key: "invoices", label: "settings.sidebar.invoices", roles: ["admin", "owner"], component: InvoicesSettingsPage, icon: IconFileInvoice, href: "/settings/invoices" },
+    { key: "notifications", label: "settings.sidebar.notifications", roles: ["owner", "staff"], component: NotificationsSettingsPage, icon: IconBell, href: "/settings/notifications" },
+    { key: "team", label: "settings.sidebar.team", roles: ["admin", "owner"], component: TeamSettingsPage, icon: IconUsers, href: "/settings/team" },
+    { key: "integrations", label: "settings.sidebar.integrations", roles: ["admin", "owner"], component: IntegrationsSettingsPage, icon: IconPlug, href: "/settings/integrations" },
+    { key: "security", label: "settings.sidebar.security", roles: ["admin", "owner", "staff", "viewer"], component: SecuritySettingsPage, icon: IconShieldLock, href: "/settings/security" },
 ]
 
 export default function SettingsTabsPage() {
@@ -69,8 +68,13 @@ export default function SettingsTabsPage() {
 
     return (
         <div className="w-full min-h-screen p-4">
+            <div className="mb-6">
+                <h1 className="text-2xl font-bold">Ayarlar</h1>
+                <p className="text-muted-foreground">Hesap ve uygulama ayarlarınızı yönetin</p>
+            </div>
+            
             {/* Mobil Drawer Butonu */}
-            <div className="flex md:hidden mb-6 ">
+            <div className="flex md:hidden mb-6">
                 <Drawer open={drawerOpen} onOpenChange={setDrawerOpen} direction="bottom">
                     <DrawerTrigger asChild>
                         <Button variant="outline" className="w-full flex items-center gap-2">
@@ -95,6 +99,7 @@ export default function SettingsTabsPage() {
                     </DrawerContent>
                 </Drawer>
             </div>
+            
             {/* Desktop Tabs */}
             <div className="hidden md:block">
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -113,6 +118,7 @@ export default function SettingsTabsPage() {
                     </TabsList>
                 </Tabs>
             </div>
+            
             {/* İçerik */}
             <div className="w-full">
                 {tabs.map(tab => (

@@ -347,7 +347,7 @@ export default function InvoicesSettingsPage() {
                         </div>
                     </CardContent>
                 </Card>
-            </div>
+        </div>
         </>
     );
 } 

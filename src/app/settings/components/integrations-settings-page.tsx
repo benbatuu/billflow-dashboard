@@ -332,9 +332,24 @@ export default function IntegrationsSettingsPage() {
     }
 
     return (
-        <div className="w-full mx-auto flex gap-8">
-            {/* Dikey Tab Menüsü */}
-            <aside className="w-56 flex-shrink-0 border-r border-gray-200 bg-white py-8">
+        <div className="w-full mx-auto flex flex-col md:flex-row gap-0 md:gap-8">
+            {/* Mobilde üstte yatay sekme menü */}
+            <div className="md:hidden sticky top-0 z-10 bg-white border-b border-gray-200">
+                <nav className="flex flex-row gap-2 overflow-x-auto px-2 py-2">
+                    {categories.map(cat => (
+                        <button
+                            key={cat.key}
+                            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${selectedCategory === cat.key ? "bg-black text-white" : "bg-gray-100 text-gray-900"}`}
+                            onClick={() => setSelectedCategory(cat.key)}
+                        >
+                            <span className="mr-1">{cat.icon}</span>
+                            {cat.label}
+                        </button>
+                    ))}
+                </nav>
+            </div>
+            {/* Dikey Tab Menüsü (sadece md+) */}
+            <aside className="hidden md:block w-56 flex-shrink-0 border-r border-gray-200 bg-white py-8">
                 <nav className="flex flex-col gap-2">
                     {categories.map(cat => (
                         <button
@@ -349,8 +364,8 @@ export default function IntegrationsSettingsPage() {
                 </nav>
             </aside>
             {/* İçerik */}
-            <main className="flex-1 py-8">
-                <div className="grid gap-6">
+            <main className="flex-1 py-4 md:py-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                     {getUpdatedIntegrations((integrations as any)[selectedCategory]).map((integration: any) => (
                         <IntegrationCard key={integration.key} integration={integration} onToggle={handleToggle} />
                     ))}
@@ -358,4 +373,4 @@ export default function IntegrationsSettingsPage() {
             </main>
         </div>
     )
-}
+} 

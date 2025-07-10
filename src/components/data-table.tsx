@@ -11,6 +11,7 @@ import {
   DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog"
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet"
 import { IconDotsVertical, IconPlus, IconLayoutColumns } from "@tabler/icons-react"
 import { useState } from "react";
 
@@ -35,6 +36,22 @@ export type DataTableProps = {
   emptyText?: React.ReactNode
 }
 
+// Add a simple mobile check hook
+function useIsMobile() {
+  const [isMobile, setIsMobile] = React.useState(false);
+  React.useEffect(() => {
+    // SSR guard
+    if (typeof window === "undefined") return;
+    function handleResize() {
+      setIsMobile(window.innerWidth < 768);
+    }
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+  return isMobile;
+}
+
 export function DataTable({
   data: initialData,
   columns: initialColumns,
@@ -56,6 +73,7 @@ export function DataTable({
   }, [initialColumns]);
   const [modal, setModal] = React.useState<{ type: "add" | "edit", row?: any } | null>(null)
   const [form, setForm] = React.useState<any>({})
+  const isMobile = useIsMobile();
 
   // Derived columns (with visibility)
   const columns = React.useMemo(() => initialColumns.filter(c => visibleCols.includes(c.key)), [initialColumns, visibleCols])
@@ -122,12 +140,14 @@ export function DataTable({
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-        <Button size="sm" className="gap-1" onClick={() => setModal({ type: "add" })}><IconPlus className="w-4 h-4" /> Yeni Ekle</Button>
+        <Button size="sm" className="hidden md:inline-flex gap-1 md:w-auto" onClick={() => setModal({ type: "add" })}><IconPlus className="w-4 h-4" /> Yeni Ekle</Button>
       </div>
+      {/* Mobile: prominent add button */}
+      <Button size="lg" className="block md:hidden w-full mb-2" onClick={() => setModal({ type: "add" })}><IconPlus className="w-5 h-5" /> Yeni Ekle</Button>
       {/* Masaüstü görünüm */}
-      <div className="hidden md:block">
-        <div className={`rounded-xl border border-[#ededed] bg-white w-full overflow-hidden shadow-none ${tableClassName}`} style={{ width: "100%", ...style }}>
-          <table className="min-w-full">
+      <div className="hidden md:block w-full max-w-screen overflow-x-auto">
+        <div className={`rounded-xl border border-[#ededed] bg-white w-full max-w-full overflow-x-auto shadow-none ${tableClassName}`} style={{ width: "100%", maxWidth: "100vw", ...style }}>
+          <table className="w-full" style={{ maxWidth: "100vw" }}>
             <thead>
               <tr>
                 {columns.map((column, idx) => (
@@ -174,8 +194,8 @@ export function DataTable({
         </div>
       </div>
       {/* Mobil görünüm: 4'ten fazla kolon varsa açılır panel */}
-      <div className="block md:hidden">
-        <div className="min-w-full" style={{ width: "100%", ...style }}>
+      <div className="block md:hidden w-full max-w-full overflow-x-auto">
+        <div className="min-w-full w-full max-w-full overflow-x-auto" style={{ width: "100%", maxWidth: "100vw", ...style }}>
           {paged.length === 0 ? (
             <div className="flex items-center justify-center h-60 text-muted-foreground text-sm w-full">
               {emptyText}
@@ -229,34 +249,60 @@ export function DataTable({
           </select>
         </div>
       </div>
-      {/* Add/Edit Modal */}
-      <Dialog open={!!modal} onOpenChange={v => !v && setModal(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{modal?.type === "add" ? "Yeni Kayıt Ekle" : "Kaydı Düzenle"}</DialogTitle>
-          </DialogHeader>
-          <form className="flex flex-col gap-3 py-2" onSubmit={e => { e.preventDefault(); handleSave() }}>
-            {initialColumns.filter(col => col.editable !== false).map(col => (
-              <div key={col.key} className="flex flex-col gap-1">
-                <label className="text-xs font-medium" htmlFor={col.key}>{col.header}</label>
-                <Input
-                  id={col.key}
-                  type={col.inputType || "text"}
-                  value={form[col.key] ?? ""}
-                  onChange={e => setForm((f: any) => ({ ...f, [col.key]: e.target.value }))}
-                  className="h-8"
-                />
-              </div>
-            ))}
-            <DialogFooter className="gap-2 mt-2">
-              <Button type="submit">Kaydet</Button>
-              <DialogClose asChild>
-                <Button variant="ghost" type="button">Vazgeç</Button>
-              </DialogClose>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+      {/* Add/Edit Modal/Sheet */}
+      {isMobile ? (
+        <Sheet open={!!modal} onOpenChange={v => !v && setModal(null)}>
+          <SheetContent side="bottom" className="max-h-[90vh] overflow-y-auto rounded-t-2xl p-0">
+            <SheetHeader className="p-4 border-b">
+              <SheetTitle>{modal?.type === "add" ? "Yeni Kayıt Ekle" : "Kaydı Düzenle"}</SheetTitle>
+            </SheetHeader>
+            <form className="flex flex-col gap-3 py-2 px-4" onSubmit={e => { e.preventDefault(); handleSave() }}>
+              {initialColumns.filter(col => col.editable !== false).map(col => (
+                <div key={col.key} className="flex flex-col gap-1">
+                  <label className="text-xs font-medium" htmlFor={col.key}>{col.header}</label>
+                  <Input
+                    id={col.key}
+                    type={col.inputType || "text"}
+                    value={form[col.key] ?? ""}
+                    onChange={e => setForm((f: any) => ({ ...f, [col.key]: e.target.value }))}
+                    className="h-8"
+                  />
+                </div>
+              ))}
+              <SheetFooter className="flex flex-row gap-x-2 mt-4">
+                <Button type="button" variant="outline" className="flex-1" onClick={() => setModal(null)}>Vazgeç</Button>
+                <Button type="submit" className="flex-1">Kaydet</Button>
+              </SheetFooter>
+            </form>
+          </SheetContent>
+        </Sheet>
+      ) : (
+        <Dialog open={!!modal} onOpenChange={v => !v && setModal(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{modal?.type === "add" ? "Yeni Kayıt Ekle" : "Kaydı Düzenle"}</DialogTitle>
+            </DialogHeader>
+            <form className="flex flex-col gap-3 py-2" onSubmit={e => { e.preventDefault(); handleSave() }}>
+              {initialColumns.filter(col => col.editable !== false).map(col => (
+                <div key={col.key} className="flex flex-col gap-1">
+                  <label className="text-xs font-medium" htmlFor={col.key}>{col.header}</label>
+                  <Input
+                    id={col.key}
+                    type={col.inputType || "text"}
+                    value={form[col.key] ?? ""}
+                    onChange={e => setForm((f: any) => ({ ...f, [col.key]: e.target.value }))}
+                    className="h-8"
+                  />
+                </div>
+              ))}
+              <DialogFooter className="flex flex-row gap-x-2 mt-2">
+                <Button type="button" variant="outline" className="flex-1" onClick={() => setModal(null)}>Vazgeç</Button>
+                <Button type="submit" className="flex-1">Kaydet</Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   )
 }
