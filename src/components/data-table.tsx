@@ -10,11 +10,10 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuCheckboxItem,
-  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog"
-import { IconDotsVertical, IconPlus, IconChevronLeft, IconChevronRight, IconChevronsLeft, IconChevronsRight, IconLayoutColumns } from "@tabler/icons-react"
-import { useRouter } from "next/navigation"
+import { IconDotsVertical, IconPlus, IconChevronLeft, IconChevronRight, IconChevronsLeft, IconChevronsRight, IconLayoutColumns, IconArrowUp, IconChevronDown } from "@tabler/icons-react"
+import { useState } from "react";
 
 export type DataTableColumn = {
   key: string
@@ -141,33 +140,125 @@ export function DataTable({
         <Button size="sm" className="gap-1" onClick={() => setModal({ type: "add" })}><IconPlus className="w-4 h-4" /> Yeni Ekle</Button>
       </div>
       {/* Table */}
-      <div
-        ref={parentRef}
-        style={{ width: "100%", ...style }}
-        className={`rounded-xl border border-[#ededed] bg-white w-full overflow-hidden shadow-none ${tableClassName}`}
-      >
-        <div className="min-w-full">
+      {/* Masaüstü görünüm */}
+      <div className="hidden md:block">
+        <div className={`rounded-xl border border-[#ededed] bg-white w-full overflow-hidden shadow-none ${tableClassName}`} style={{ width: "100%", ...style }}>
+          <div className="min-w-full" ref={parentRef}>
+            {/* Header */}
+            <div
+              className="sticky top-0 z-20 border-b border-[#ededed] bg-[#f8f8f8]"
+              style={{
+                height: headerHeight,
+                display: "grid",
+                gridTemplateColumns: colWidths + " 48px",
+                alignItems: "center",
+                borderTopLeftRadius: 12,
+                borderTopRightRadius: 12,
+              }}
+            >
+              {columns.map((column, idx) => (
+                <div
+                  key={column.key}
+                  className={`px-6 py-3 text-xs font-medium uppercase tracking-normal text-[#222] select-none flex items-center h-full`}
+                  style={{
+                    minHeight: headerHeight,
+                    ...column.style,
+                    borderTopLeftRadius: idx === 0 ? 12 : undefined,
+                    borderTopRightRadius: idx === columns.length - 1 ? 12 : undefined,
+                    justifyContent: column.align === "center" ? "center" : column.align === "right" ? "flex-end" : "flex-start",
+                    textAlign: column.align || "left",
+                  }}
+                >
+                  {column.header}
+                </div>
+              ))}
+              {/* Empty cell for actions */}
+              <div />
+            </div>
+            {/* Rows */}
+            <div style={{ position: "relative", height: rowVirtualizer.getTotalSize() }}>
+              {rowVirtualizer.getVirtualItems().length === 0 && (
+                <div className="flex items-center justify-center h-60 text-muted-foreground text-sm w-full">
+                  {emptyText}
+                </div>
+              )}
+              {rowVirtualizer.getVirtualItems().map((row, idx) => {
+                const rowData = paged[row.index]
+                const isLast = row.index === rowVirtualizer.getVirtualItems().length - 1
+                return (
+                  <div
+                    key={row.index}
+                    className={`group transition-colors border-b border-[#f1f1f1] flex items-center ${isLast ? "rounded-b-xl" : ""} ${row.index % 2 === 0 ? "bg-white" : "bg-[#fafbfc]"} hover:bg-[#f5f5f5]`}
+                    style={{
+                      position: "absolute",
+                      top: row.start,
+                      left: 0,
+                      width: "100%",
+                      height: row.size,
+                      display: "grid",
+                      gridTemplateColumns: colWidths + " 48px",
+                      alignItems: "center",
+                    }}
+                  >
+                    {columns.map((column, idx2) => (
+                      <div
+                        key={column.key}
+                        className={`px-6 py-3 text-sm flex items-center h-full overflow-hidden whitespace-nowrap text-ellipsis`}
+                        style={{
+                          minHeight: rowHeight,
+                          ...column.style,
+                          borderBottomLeftRadius: isLast && idx2 === 0 ? 12 : undefined,
+                          borderBottomRightRadius: isLast && idx2 === columns.length - 1 ? 12 : undefined,
+                          justifyContent: column.align === "center" ? "center" : column.align === "right" ? "flex-end" : "flex-start",
+                          textAlign: column.align || "left",
+                        }}
+                      >
+                        {column.cell ? column.cell(rowData) : rowData[column.key]}
+                      </div>
+                    ))}
+                    {/* Row actions */}
+                    <div className="flex items-center justify-end pr-4">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="size-7"><IconDotsVertical className="w-4 h-4" /></Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => setModal({ type: "edit", row: rowData })}>Düzenle</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleDelete(rowData)} className="text-destructive">Sil</DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+      {/* Mobil görünüm: 4'ten fazla kolon varsa açılır panel */}
+      <div className="block md:hidden">
+        <div className="min-w-full" ref={parentRef} style={{ width: "100%", ...style }}>
           {/* Header */}
           <div
             className="sticky top-0 z-20 border-b border-[#ededed] bg-[#f8f8f8]"
             style={{
               height: headerHeight,
               display: "grid",
-              gridTemplateColumns: colWidths + " 48px",
+              gridTemplateColumns: `repeat(${Math.min(columns.length, 4)}, 1fr) 40px`,
               alignItems: "center",
               borderTopLeftRadius: 12,
               borderTopRightRadius: 12,
             }}
           >
-            {columns.map((column, idx) => (
+            {columns.slice(0, 4).map((column, idx) => (
               <div
                 key={column.key}
-                className={`px-6 py-3 text-xs font-medium uppercase tracking-normal text-[#222] select-none flex items-center h-full`}
+                className={`px-4 py-3 text-xs font-medium uppercase tracking-normal text-[#222] select-none flex items-center h-full`}
                 style={{
                   minHeight: headerHeight,
                   ...column.style,
                   borderTopLeftRadius: idx === 0 ? 12 : undefined,
-                  borderTopRightRadius: idx === columns.length - 1 ? 12 : undefined,
+                  borderTopRightRadius: idx === 3 ? 12 : undefined,
                   justifyContent: column.align === "center" ? "center" : column.align === "right" ? "flex-end" : "flex-start",
                   textAlign: column.align || "left",
                 }}
@@ -175,67 +266,21 @@ export function DataTable({
                 {column.header}
               </div>
             ))}
-            {/* Empty cell for actions */}
+            {/* Empty cell for actions or expand */}
             <div />
           </div>
           {/* Rows */}
-          <div style={{ position: "relative", height: rowVirtualizer.getTotalSize() }}>
-            {rowVirtualizer.getVirtualItems().length === 0 && (
-              <div className="flex items-center justify-center h-60 text-muted-foreground text-sm w-full">
-                {emptyText}
-              </div>
-            )}
-            {rowVirtualizer.getVirtualItems().map((row, idx) => {
-              const rowData = paged[row.index]
-              const isLast = row.index === rowVirtualizer.getVirtualItems().length - 1
-              return (
-                <div
-                  key={row.index}
-                  className={`group transition-colors border-b border-[#f1f1f1] flex items-center ${isLast ? "rounded-b-xl" : ""} ${row.index % 2 === 0 ? "bg-white" : "bg-[#fafbfc]"} hover:bg-[#f5f5f5]`}
-                  style={{
-                    position: "absolute",
-                    top: row.start,
-                    left: 0,
-                    width: "100%",
-                    height: row.size,
-                    display: "grid",
-                    gridTemplateColumns: colWidths + " 48px",
-                    alignItems: "center",
-                  }}
-                >
-                  {columns.map((column, idx2) => (
-                    <div
-                      key={column.key}
-                      className={`px-6 py-3 text-sm flex items-center h-full overflow-hidden whitespace-nowrap text-ellipsis`}
-                      style={{
-                        minHeight: rowHeight,
-                        ...column.style,
-                        borderBottomLeftRadius: isLast && idx2 === 0 ? 12 : undefined,
-                        borderBottomRightRadius: isLast && idx2 === columns.length - 1 ? 12 : undefined,
-                        justifyContent: column.align === "center" ? "center" : column.align === "right" ? "flex-end" : "flex-start",
-                        textAlign: column.align || "left",
-                      }}
-                    >
-                      {column.cell ? column.cell(rowData) : rowData[column.key]}
-                    </div>
-                  ))}
-                  {/* Row actions */}
-                  <div className="flex items-center justify-end pr-4">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="size-7"><IconDotsVertical className="w-4 h-4" /></Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => router && router.push && router.push(`/invoices/${rowData.id}/view`)}>Görüntüle</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setModal({ type: "edit", row: rowData })}>Düzenle</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleDelete(rowData)} className="text-destructive">Sil</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
+          <MobileRows
+            columns={columns}
+            paged={paged}
+            rowHeight={rowHeight}
+            rowVirtualizer={rowVirtualizer}
+            handleDelete={handleDelete}
+            setModal={setModal}
+            router={router}
+            emptyText={emptyText}
+            parentRef={parentRef}
+          />
         </div>
       </div>
       {/* Pagination */}
@@ -288,4 +333,134 @@ export function DataTable({
       </Dialog>
     </div>
   )
+}
+
+// Mobilde açılır satırları gösteren yardımcı bileşen
+function MobileRows({ columns, paged, rowHeight, rowVirtualizer, handleDelete, setModal, router, emptyText, parentRef }: any) {
+  const [openRow, setOpenRow] = useState<number | null>(null);
+  if (columns.length <= 4) {
+    // 4 veya daha az kolon varsa klasik grid göster
+    return (
+      <div style={{ overflowY: "auto", maxHeight: parentRef?.current?.style?.maxHeight || undefined }}>
+        {rowVirtualizer.getVirtualItems().length === 0 && (
+          <div className="flex items-center justify-center h-60 text-muted-foreground text-sm w-full">
+            {emptyText}
+          </div>
+        )}
+        {rowVirtualizer.getVirtualItems().map((row: any, idx: number) => {
+          const rowData = paged[row.index];
+          const isLast = row.index === rowVirtualizer.getVirtualItems().length - 1;
+          return (
+            <div
+              key={row.index}
+              className={`group transition-colors border-b border-[#f1f1f1] flex items-center ${isLast ? "rounded-b-xl" : ""} ${row.index % 2 === 0 ? "bg-white" : "bg-[#fafbfc]"} hover:bg-[#f5f5f5]`}
+              style={{
+                display: "grid",
+                gridTemplateColumns: `repeat(${columns.length}, 1fr) 40px`,
+                alignItems: "center",
+                minHeight: rowHeight,
+              }}
+            >
+              {columns.map((column: any, idx2: number) => (
+                <div
+                  key={column.key}
+                  className={`px-4 py-3 text-sm flex items-center h-full overflow-hidden whitespace-nowrap text-ellipsis`}
+                  style={{
+                    minHeight: rowHeight,
+                    ...column.style,
+                    borderBottomLeftRadius: isLast && idx2 === 0 ? 12 : undefined,
+                    borderBottomRightRadius: isLast && idx2 === columns.length - 1 ? 12 : undefined,
+                    justifyContent: column.align === "center" ? "center" : column.align === "right" ? "flex-end" : "flex-start",
+                    textAlign: column.align || "left",
+                  }}
+                >
+                  {column.cell ? column.cell(rowData) : rowData[column.key]}
+                </div>
+              ))}
+              {/* Row actions */}
+              <div className="flex items-center justify-end pr-2">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="size-7"><IconDotsVertical className="w-4 h-4" /></Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => router && router.push && router.push(`/invoices/${rowData.id}/view`)}>Görüntüle</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setModal({ type: "edit", row: rowData })}>Düzenle</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleDelete(rowData)} className="text-destructive">Sil</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+  // 4'ten fazla kolon varsa açılır panel
+  return (
+    <div style={{ overflowY: "auto", maxHeight: parentRef?.current?.style?.maxHeight || undefined }}>
+      {rowVirtualizer.getVirtualItems().length === 0 && (
+        <div className="flex items-center justify-center h-60 text-muted-foreground text-sm w-full">
+          {emptyText}
+        </div>
+      )}
+      {rowVirtualizer.getVirtualItems().map((row: any, idx: number) => {
+        const rowData = paged[row.index];
+        const isLast = row.index === rowVirtualizer.getVirtualItems().length - 1;
+        const expanded = openRow === row.index;
+        return (
+          <React.Fragment key={row.index}>
+            <div
+              className={`group transition-colors border-b border-[#f1f1f1] flex items-center ${isLast ? "rounded-b-xl" : ""} ${row.index % 2 === 0 ? "bg-white" : "bg-[#fafbfc]"} hover:bg-[#f5f5f5] cursor-pointer`}
+              style={{
+                display: "grid",
+                gridTemplateColumns: `repeat(4, 1fr) 40px`,
+                alignItems: "center",
+                minHeight: rowHeight,
+              }}
+              onClick={() => setOpenRow(expanded ? null : row.index)}
+            >
+              {columns.slice(0, 4).map((column: any, idx2: number) => (
+                <div
+                  key={column.key}
+                  className={`px-4 py-3 text-sm flex items-center h-full overflow-hidden whitespace-nowrap text-ellipsis`}
+                  style={{
+                    minHeight: rowHeight,
+                    ...column.style,
+                    borderBottomLeftRadius: isLast && idx2 === 0 ? 12 : undefined,
+                    borderBottomRightRadius: isLast && idx2 === 3 ? 12 : undefined,
+                    justifyContent: column.align === "center" ? "center" : column.align === "right" ? "flex-end" : "flex-start",
+                    textAlign: column.align || "left",
+                  }}
+                >
+                  {column.cell ? column.cell(rowData) : rowData[column.key]}
+                </div>
+              ))}
+              {/* Expand/collapse icon or row actions */}
+              <div className="flex items-center justify-end pr-2">
+                <Button variant="ghost" size="icon" className="size-7" tabIndex={-1} onClick={e => { e.stopPropagation(); setOpenRow(expanded ? null : row.index); }}>
+                  {expanded ? <IconChevronDown className="rotate-180 transition transition-3" /> : <IconChevronDown className="transition transition-3"/>}
+                </Button>
+              </div>
+            </div>
+            {expanded && (
+              <div className="bg-[#f8f8f8] border-b border-[#ededed] px-4 py-3 text-sm animate-fade-in">
+                {columns.slice(4).map((column: any) => (
+                  <div key={column.key} className="flex gap-2 py-1 border-b last:border-0 border-dashed border-muted-2">
+                    <span className="font-medium min-w-[110px] inline-block">{column.header}:</span>
+                    <span>{column.cell ? column.cell(rowData) : rowData[column.key]}</span>
+                  </div>
+                ))}
+                {/* Row actions (mobilde açılırda da göster) */}
+                <div className="flex gap-2 pt-2">
+                  <Button size="sm" variant="outline" onClick={() => setModal({ type: "edit", row: rowData })}>Düzenle</Button>
+                  <Button size="sm" variant="destructive" onClick={() => handleDelete(rowData)}>Sil</Button>
+                </div>
+              </div>
+            )}
+          </React.Fragment>
+        );
+      })}
+    </div>
+  );
 }

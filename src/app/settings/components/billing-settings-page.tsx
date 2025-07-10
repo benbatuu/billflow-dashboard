@@ -13,17 +13,84 @@ import { Textarea } from "@/components/ui/textarea"
 import { t, getCurrentLang } from '@/lib/i18n';
 import { IconEdit, IconTrash } from "@tabler/icons-react";
 import { IconFileText, IconChevronDown, IconChevronRight } from "@tabler/icons-react";
+import { DataTable, DataTableColumn } from "@/components/data-table";
 
 const planFeatures = [
     { label: "User Limit", value: "10" },
     { label: "Customer Limit", value: "100" },
     { label: "Support", value: "Email" },
 ]
-const billingHistory = [
-    { id: '1', date: "2024-06-01", plan: "Pro", amount: "$29", status: "Paid", invoiceNo: "INV-20240601", customer: "Acme Inc.", paymentMethod: "Visa **** 4242", pdf: "/invoices/invoice-20240601.pdf" },
-    { id: '2', date: "2024-05-01", plan: "Pro", amount: "$29", status: "Paid", invoiceNo: "INV-20240501", customer: "Acme Inc.", paymentMethod: "Visa **** 4242", pdf: "/invoices/invoice-20240501.pdf" },
-    { id: '3', date: "2024-04-01", plan: "Pro", amount: "$29", status: "Paid", invoiceNo: "INV-20240401", customer: "Acme Inc.", paymentMethod: "Visa **** 4242", pdf: "/invoices/invoice-20240401.pdf" },
+// Billing history mock data (randomized)
+const pdfOptions = [
+  '/invoices/invoice-20240601.pdf',
+  '/invoices/invoice-20240501.pdf',
+  '/invoices/invoice-20240401.pdf'
 ];
+
+const plansMock: string[] = ['Pro', 'Business', 'Enterprise'];
+const amountsMock: Record<string, string> = { 'Pro': '$29', 'Business': '$99', 'Enterprise': '$199' };
+const statuses = ['Paid', 'Pending', 'Failed'];
+const customers = ['Acme Inc.', 'Globex Corp.', 'Soylent LLC', 'Initech', 'Umbrella Corp.'];
+const paymentMethods = [
+  'Visa **** 4242', 
+  'Mastercard **** 1234', 
+  'Amex **** 5678',
+  'PayPal',
+  'Bank Transfer'
+];
+
+function getRandomDate() {
+  const start = new Date(2023, 0, 1);
+  const end = new Date(2024, 6, 1);
+  const randomDate = new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
+  return randomDate.toISOString().slice(0, 10);
+}
+
+function getRandomItem<T>(arr: T[]): T {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+type BillingHistoryRow = {
+  date: string;
+  plan: string;
+  amount: string;
+  status: string;
+  invoiceNo: string;
+  customer: string;
+  paymentMethod: string;
+  pdf: string;
+};
+const billingHistory: BillingHistoryRow[] = [];
+const datesUsed: { [date: string]: boolean } = {};
+
+for (let i = 1; i <= 50; i++) {
+  let date;
+  if (Math.random() < 0.6 && Object.keys(datesUsed).length > 0) {
+    // %60 ihtimalle daha önceki bir tarihi tekrar kullan (aynı gün birden fazla fatura için)
+    date = getRandomItem(Object.keys(datesUsed));
+  } else {
+    date = getRandomDate();
+  }
+  datesUsed[date] = true;
+
+  const plan = getRandomItem(plansMock);
+  const amount = amountsMock[plan];
+  const status = getRandomItem(statuses);
+  const customer = getRandomItem(customers);
+  const paymentMethod = getRandomItem(paymentMethods);
+  const pdf = getRandomItem(pdfOptions);
+
+  billingHistory.push({
+    date,
+    plan,
+    amount,
+    status,
+    invoiceNo: `INV-${date.replace(/-/g, '')}-${i}`,
+    customer,
+    paymentMethod,
+    pdf
+  });
+}
 
 // 1. Update plans array to include both priceMonthly and priceAnnual
 const plans = [
@@ -312,6 +379,28 @@ function getCardType(number: string) {
     return null;
 }
 
+// Billing History DataTable columns
+const billingColumns: DataTableColumn[] = [
+  { key: "date", header: "Date", width: 120, align: "left" },
+  { key: "plan", header: "Plan", width: 100, align: "left" },
+  { key: "amount", header: "Amount", width: 80, align: "right" },
+  { key: "status", header: "Status", width: 100, align: "center" },
+  { key: "invoiceNo", header: "Invoice No", width: 140, align: "left" },
+  { key: "customer", header: "Customer", width: 160, align: "left" },
+  { key: "paymentMethod", header: "Payment Method", width: 140, align: "left" },
+  {
+    key: "pdf",
+    header: "Invoice PDF",
+    width: 80,
+    align: "center",
+    cell: (row) => row.pdf ? (
+      <a href={row.pdf} target="_blank" rel="noopener noreferrer">
+        <IconFileText className="w-6 h-6 hover:scale-110 transition" />
+      </a>
+    ) : "-"
+  },
+];
+
 export default function BillingSettingsPage() {
     const [form, setForm] = useState({
         billingName: "",
@@ -328,6 +417,39 @@ export default function BillingSettingsPage() {
     const [selectedCardId, setSelectedCardId] = useState(cards[0]?.id || '');
     // Add edit modal state
     const [editCardId, setEditCardId] = useState<string | null>(null);
+    const [billingSearch, setBillingSearch] = useState("");
+    // Fiyat ve tarih filtreleri
+    const [minPrice, setMinPrice] = useState("");
+    const [maxPrice, setMaxPrice] = useState("");
+    const [startDate, setStartDate] = useState("");
+    const [endDate, setEndDate] = useState("");
+    // Filtrelenmiş fatura geçmişi
+    const filteredBillingHistory = billingHistory.filter(row => {
+        const q = billingSearch.trim().toLowerCase();
+        // Fiyatı sayıya çevir
+        const amount = parseFloat(row.amount.replace(/[^\d.]/g, ""));
+        // Tarih
+        const rowDate = row.date;
+        // Search
+        let matchesSearch = !q || (
+            row.date.toLowerCase().includes(q) ||
+            row.plan.toLowerCase().includes(q) ||
+            row.amount.toLowerCase().includes(q) ||
+            row.status.toLowerCase().includes(q) ||
+            row.invoiceNo.toLowerCase().includes(q) ||
+            row.customer.toLowerCase().includes(q) ||
+            row.paymentMethod.toLowerCase().includes(q)
+        );
+        // Fiyat aralığı
+        let matchesPrice = true;
+        if (minPrice && !isNaN(Number(minPrice))) matchesPrice = amount >= Number(minPrice);
+        if (maxPrice && !isNaN(Number(maxPrice))) matchesPrice = matchesPrice && amount <= Number(maxPrice);
+        // Tarih aralığı
+        let matchesDate = true;
+        if (startDate) matchesDate = rowDate >= startDate;
+        if (endDate) matchesDate = matchesDate && rowDate <= endDate;
+        return matchesSearch && matchesPrice && matchesDate;
+    });
 
     useEffect(() => {
         // Set a default active plan for the cancellation modal
@@ -432,28 +554,15 @@ export default function BillingSettingsPage() {
                 {/* Billing History / Invoices */}
                 <Card className="rounded-xl shadow-md">
                     <CardHeader>
-                        <CardTitle>Billing History</CardTitle>
-                        <CardDescription>All your paid invoices</CardDescription>
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 w-full">
+                            <div>
+                                <CardTitle>Billing History</CardTitle>
+                                <CardDescription>All your paid invoices</CardDescription>
+                            </div>
+                        </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="overflow-x-auto">
-                            <table className="min-w-full text-sm border rounded-lg overflow-hidden">
-                                <thead>
-                                    <tr className="bg-muted text-foreground">
-                                        <th className="px-4 py-2 text-left">#</th>
-                                        <th className="px-4 py-2 text-left">Date</th>
-                                        <th className="px-4 py-2 text-left">Plan</th>
-                                        <th className="px-4 py-2 text-left">Amount</th>
-                                        <th className="px-4 py-2 text-left">Invoice</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {billingHistory.map((row, i) => (
-                                        <ExpandableBillingRow key={i} row={row} />
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                        <DataTable data={billingHistory} columns={billingColumns} rowHeight={48} headerHeight={48} emptyText="No invoices found." />
                     </CardContent>
                 </Card>
             </div>
@@ -545,42 +654,15 @@ export default function BillingSettingsPage() {
                 {/* Billing History / Invoices */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Billing History</CardTitle>
-                        <CardDescription>All your paid invoices</CardDescription>
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 w-full">
+                            <div>
+                                <CardTitle>Billing History</CardTitle>
+                                <CardDescription>All your paid invoices</CardDescription>
+                            </div>
+                        </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="overflow-x-auto">
-                            <table className="min-w-full text-sm border rounded-lg overflow-hidden">
-                                <thead>
-                                    <tr className="bg-muted text-foreground">
-                                        <th className="px-4 py-2 text-left">Date</th>
-                                        <th className="px-4 py-2 text-left">Plan</th>
-                                        <th className="px-4 py-2 text-left">Amount</th>
-                                        <th className="px-4 py-2 text-left">Status</th>
-                                        <th className="px-4 py-2 text-left">Invoice No</th>
-                                        <th className="px-4 py-2 text-left">Customer</th>
-                                        <th className="px-4 py-2 text-left">Payment Method</th>
-                                        <th className="px-4 py-2 text-left">Invoice PDF</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {billingHistory.map((row, i) => (
-                                        <tr key={i} className="border-b last:border-0">
-                                            <td className="px-4 py-2 whitespace-nowrap">{row.date}</td>
-                                            <td className="px-4 py-2 whitespace-nowrap">{row.plan}</td>
-                                            <td className="px-4 py-2 whitespace-nowrap">{row.amount}</td>
-                                            <td className="px-4 py-2 whitespace-nowrap">{row.status}</td>
-                                            <td className="px-4 py-2 whitespace-nowrap">{row.invoiceNo}</td>
-                                            <td className="px-4 py-2 whitespace-nowrap">{row.customer}</td>
-                                            <td className="px-4 py-2 whitespace-nowrap">{row.paymentMethod}</td>
-                                            <td className="px-4 py-2 whitespace-nowrap">
-                                                {row.pdf ? <a href={row.pdf} target="_blank" rel="noopener noreferrer"><IconFileText className="w-6 h-6 hover:scale-110 transition" /></a> : "-"}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                        <DataTable data={billingHistory} columns={billingColumns} rowHeight={48} headerHeight={48} emptyText="No invoices found." />
                     </CardContent>
                 </Card>
             </div>
@@ -1078,40 +1160,3 @@ function EditCardForm({ card, onSave, onCancel }: { card: any, onSave: (updated:
         </form>
     );
 }
-
-// Add ExpandableBillingRow component
-function ExpandableBillingRow({ row }: { row: any }) {
-    const [open, setOpen] = useState(false);
-    return <>
-        <tr className="border-b last:border-0 cursor-pointer group" onClick={() => setOpen(o => !o)}>
-            <td className="py-2 whitespace-nowrap">
-                <span className="mr-1 flex">
-                    {open ? <IconChevronDown className="w-5 h-5 text-muted-foreground" /> : <IconChevronRight className="w-5 h-5 text-muted-foreground" />}
-                    {row.id}
-                </span>
-            </td>
-            <td className="py-2 whitespace-nowrap">{row.date}</td>
-            <td className="px-4 py-2 whitespace-nowrap">{row.plan}</td>
-            <td className="px-4 py-2 whitespace-nowrap">{row.amount}</td>
-            <td className="px-4 py-2 whitespace-nowrap flex items-center gap-2">
-                {row.pdf ? (
-                    <a href={row.pdf} target="_blank" rel="noopener noreferrer">
-                        <IconFileText className="w-6 h-6 hover:scale-110 transition" />
-                    </a>
-                ) : "-"}
-            </td>
-        </tr>
-        {open && (
-            <tr className="bg-muted-2">
-                <td colSpan={4} className="px-4 py-2">
-                    <div className="flex flex-col gap-1 text-xs">
-                        <div><span className="font-medium">Status:</span> {row.status}</div>
-                        <div><span className="font-medium">Invoice No:</span> {row.invoiceNo}</div>
-                        <div><span className="font-medium">Customer:</span> {row.customer}</div>
-                        <div><span className="font-medium">Payment Method:</span> {row.paymentMethod}</div>
-                    </div>
-                </td>
-            </tr>
-        )}
-    </>;
-} 
