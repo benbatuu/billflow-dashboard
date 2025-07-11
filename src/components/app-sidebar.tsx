@@ -12,17 +12,14 @@ import {
   IconSettings,
   IconPlug,
   IconHelp,
-  IconUserCheck,
   IconFileInvoice,
   IconUser,
   IconBuilding,
   IconShieldLock,
-  IconMail,
   IconChevronRight,
   IconChevronDown,
 } from "@tabler/icons-react"
 
-import { NavUser } from "@/components/nav-user"
 import {
   Sidebar,
   SidebarContent,
@@ -50,39 +47,39 @@ const menuGroups = [
     group: 'billing',
     title: 'Fatura & Müşteri',
     items: [
-      { label: 'invoices', href: '/invoices', icon: IconFileInvoice, roles: ['admin', 'owner', 'staff'] },
-      { label: 'customers', href: '/customers', icon: IconUsers, roles: ['admin', 'owner', 'staff'] },
-      { label: 'subscriptions', href: '/subscriptions', icon: IconFileText, roles: ['admin', 'owner'] },
-      { label: 'payments', href: '/payments', icon: IconCreditCard, roles: ['admin', 'owner', 'staff'] },
+      { label: 'invoices', href: '/dashboard/invoices', icon: IconFileInvoice, roles: ['admin', 'owner', 'staff'] },
+      { label: 'customers', href: '/dashboard/customers', icon: IconUsers, roles: ['admin', 'owner', 'staff'] },
+      { label: 'subscriptions', href: '/dashboard/subscriptions', icon: IconFileText, roles: ['admin', 'owner'] },
+      { label: 'payments', href: '/dashboard/payments', icon: IconCreditCard, roles: ['admin', 'owner', 'staff'] },
     ],
   },
   {
     group: 'reports',
     title: 'Raporlar',
     items: [
-      { label: 'reports', href: '/reports', icon: IconReport, roles: ['admin', 'owner', 'staff', 'viewer'] },
+      { label: 'reports', href: '/dashboard/reports', icon: IconReport, roles: ['admin', 'owner', 'staff', 'viewer'] },
     ],
   },
   {
     group: 'settings',
     title: 'Ayarlar',
     items: [
-      { label: 'settings', href: '/settings', icon: IconSettings, roles: ['admin', 'owner'], hasSubmenu: true },
-      { label: 'support', href: '/support', icon: IconHelp, roles: ['admin', 'owner', 'staff', 'viewer'] },
+      { label: 'settings', href: '/dashboard/settings', icon: IconSettings, roles: ['admin', 'owner'], hasSubmenu: true },
+      { label: 'support', href: '/dashboard/support', icon: IconHelp, roles: ['admin', 'owner', 'staff', 'viewer'] },
     ],
   },
 ]
 
 // Settings alt menüleri
 const settingsSubmenu = [
-  { label: 'profile', href: '/settings/profile', icon: IconUser, roles: ['admin', 'owner', 'staff', 'viewer'] },
-  { label: 'company', href: '/settings/company', icon: IconBuilding, roles: ['admin', 'owner'] },
-  { label: 'billing', href: '/settings/billing', icon: IconCreditCard, roles: ['admin', 'owner'] },
-  { label: 'invoices', href: '/settings/invoices', icon: IconFileInvoice, roles: ['admin', 'owner'] },
-  { label: 'notifications', href: '/settings/notifications', icon: IconBell, roles: ['owner', 'staff'] },
-  { label: 'team', href: '/settings/team', icon: IconUsers, roles: ['admin', 'owner'] },
-  { label: 'integrations', href: '/settings/integrations', icon: IconPlug, roles: ['admin', 'owner'] },
-  { label: 'security', href: '/settings/security', icon: IconShieldLock, roles: ['admin', 'owner', 'staff', 'viewer'] },
+  { label: 'profile', href: '/dashboard/settings/profile', icon: IconUser, roles: ['admin', 'owner', 'staff', 'viewer'] },
+  { label: 'company', href: '/dashboard/settings/company', icon: IconBuilding, roles: ['admin', 'owner'] },
+  { label: 'billing', href: '/dashboard/settings/billing', icon: IconCreditCard, roles: ['admin', 'owner'] },
+  { label: 'invoices', href: '/dashboard/settings/invoices', icon: IconFileInvoice, roles: ['admin', 'owner'] },
+  { label: 'notifications', href: '/dashboard/settings/notifications', icon: IconBell, roles: ['owner', 'staff'] },
+  { label: 'team', href: '/dashboard/settings/team', icon: IconUsers, roles: ['admin', 'owner'] },
+  { label: 'integrations', href: '/sdashboard/ettings/integrations', icon: IconPlug, roles: ['admin', 'owner'] },
+  { label: 'security', href: '/dashboard/settings/security', icon: IconShieldLock, roles: ['admin', 'owner', 'staff', 'viewer'] },
 ]
 
 function getUserRole() {
@@ -189,7 +186,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
-      
+
       <SidebarContent className="px-2 py-4">
         {filteredGroups.map(group => (
           <SidebarGroup key={group.group} className="mb-6">
@@ -204,12 +201,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <SidebarMenuItem key={item.label}>
                     {item.hasSubmenu ? (
                       <>
-                        <SidebarMenuButton 
+                        <SidebarMenuButton
                           onClick={toggleSettings}
                           className={cn(
                             "w-full justify-between transition-colors",
-                            isSettingsActive 
-                              ? "bg-primary/10 text-primary border-r-2 border-primary" 
+                            isSettingsActive
+                              ? "bg-primary/10 text-primary border-r-2 border-primary"
                               : "hover:bg-accent/50"
                           )}
                         >
@@ -246,7 +243,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         )}
                       </>
                     ) : (
-                      <SidebarMenuButton 
+                      <SidebarMenuButton
                         asChild
                         className={cn(
                           "w-full justify-start transition-colors",
@@ -268,10 +265,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarGroup>
         ))}
       </SidebarContent>
-      
-      <SidebarFooter className="border-t border-border/50 pt-4">
-        <NavUser user={{ name: "Demo User", email: "a@b.com", avatar: "/avatars/shadcn.jpg" }} />
-      </SidebarFooter>
+
     </Sidebar>
   )
 }

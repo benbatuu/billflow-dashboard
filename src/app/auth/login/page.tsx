@@ -1,9 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { useAuth } from "@/context/AuthProvider";
 
 export default function LoginPage() {
     const router = useRouter()
@@ -11,6 +12,23 @@ export default function LoginPage() {
     const [password, setPassword] = useState("")
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState("")
+    const { login, isAuthenticated } = useAuth();
+    const [checking, setChecking] = useState(true);
+
+    useEffect(() => {
+        // Eğer localStorage'da token varsa veya context'te authenticated ise
+        const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+        if (token || isAuthenticated) {
+            router.replace("/dashboard");
+        } else {
+            setChecking(false);
+        }
+    }, [router, isAuthenticated]);
+
+    if (checking) {
+        // Eğer token varsa ve redirect yapılacaksa, hiç progress bar veya loading gösterme
+        return null;
+    }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -24,11 +42,9 @@ export default function LoginPage() {
             })
             if (!res.ok) throw new Error("Giriş başarısız")
             const data = await res.json()
-            // Token'ı kaydet
-            localStorage.setItem("token", data.token)
-            // Dashboard'a yönlendir, loading state'i koru
-            router.push("/")
-            // setLoading(false) YOK, çünkü yönlendirme olacak
+            // Token'ı 'Bearer ' prefix'iyle kaydet
+            login(`Bearer ${data.token}`)
+            router.push("/dashboard")
         } catch (err: any) {
             setError(err.message)
             setLoading(false)

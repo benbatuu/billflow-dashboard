@@ -1,6 +1,8 @@
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { LanguageSwitcher } from "./language-switcher"
 import { ThemeToggle } from "./theme-toggle"
+import { NavUser } from "./nav-user"
+import Notification from "./notification"
 
 export function SiteHeader() {
   return (
@@ -10,6 +12,8 @@ export function SiteHeader() {
         <div className="ml-auto flex items-center gap-2">
           <LanguageSwitcher />
           <ThemeToggle />
+          <Notification />
+          <NavUser user={{ name: "Demo User", email: "a@b.com", avatar: "/avatars/shadcn.jpg" }} />
         </div>
       </div>
     </header>

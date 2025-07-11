@@ -1,10 +1,54 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import bcrypt from "bcryptjs";
+import { v4 as uuidv4 } from "uuid";
 
 export async function POST(req: NextRequest) {
-    const { email, password } = await req.json()
-    // Demo amaçlı sabit kullanıcı
-    if (email === "a@b.com" && password === "123") {
-        return NextResponse.json({ success: true, token: "demo-token" })
+    const { email, password } = await req.json();
+    if (!email || !password)
+        return NextResponse.json({ error: "Email and password required" }, { status: 400 });
+
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user)
+        return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+
+    const valid = await bcrypt.compare(password, user.passwordHash);
+    if (!valid)
+        return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+
+    // Session oluştur
+    const sessionToken = uuidv4();
+    const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7); // 7 gün
+    await prisma.session.create({
+        data: {
+            userId: user.id,
+            token: sessionToken,
+            expiresAt,
+        },
+    });
+
+    const res = NextResponse.json({ success: true });
+    res.cookies.set("sid", sessionToken, {
+        httpOnly: true,
+        secure: true,
+        path: "/",
+        sameSite: "lax",
+        expires: expiresAt,
+    });
+    return res;
+}
+
+export async function DELETE(req: NextRequest) {
+    const sid = req.cookies.get("sid")?.value;
+    if (sid) {
+        await prisma.session.deleteMany({ where: { token: sid } });
     }
-    return NextResponse.json({ success: false, message: "Geçersiz giriş" }, { status: 401 })
-} 
+    const res = NextResponse.json({ success: true });
+    res.cookies.set("sid", "", {
+        httpOnly: true,
+        secure: true,
+        path: "/",
+        expires: new Date(0),
+    });
+    return res;
+}

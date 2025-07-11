@@ -1,307 +1,278 @@
 "use client"
 
 import * as React from "react"
+import {
+  ColumnDef,
+  TableOptions,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+  SortingState,
+  ColumnFiltersState,
+  VisibilityState,
+  RowSelectionState,
+} from "@tanstack/react-table"
+import { useVirtualizer } from "@tanstack/react-virtual"
+import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuCheckboxItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog"
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet"
-import { IconDotsVertical, IconPlus, IconLayoutColumns } from "@tabler/icons-react"
-import { useState } from "react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { ChevronDown, ArrowUpDown, ChevronsLeft, ChevronsRight, ChevronLeft, ChevronRight, Settings2 } from "lucide-react"
 
-export type DataTableColumn = {
-  key: string
-  header: React.ReactNode
-  width?: number
-  cell?: (row: any) => React.ReactNode
-  align?: "left" | "center" | "right"
-  style?: React.CSSProperties
-  editable?: boolean
-  inputType?: string
-}
-
-export type DataTableProps = {
-  data: any[]
-  columns: DataTableColumn[]
-  rowHeight?: number
-  headerHeight?: number
-  tableClassName?: string
-  style?: React.CSSProperties
-  emptyText?: React.ReactNode
-}
-
-// Add a simple mobile check hook
-function useIsMobile() {
-  const [isMobile, setIsMobile] = React.useState(false);
-  React.useEffect(() => {
-    // SSR guard
-    if (typeof window === "undefined") return;
-    function handleResize() {
-      setIsMobile(window.innerWidth < 768);
-    }
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-  return isMobile;
-}
-
-export function DataTable({
-  data: initialData,
-  columns: initialColumns,
-  rowHeight = 56,
-  headerHeight = 48,
-  tableClassName = "",
-  style = {},
-  emptyText = "Kayıt bulunamadı.",
-}: DataTableProps) {
-  // State
-  const [data, setData] = React.useState<any[]>(initialData)
-  React.useEffect(() => { setData(initialData) }, [initialData])
-  const [search, setSearch] = React.useState("")
-  const [page, setPage] = React.useState(0)
-  const [pageSize, setPageSize] = React.useState(10)
-  const [visibleCols, setVisibleCols] = React.useState(() => initialColumns.map(c => c.key));
-  React.useEffect(() => {
-    setVisibleCols(initialColumns.map(c => c.key));
-  }, [initialColumns]);
-  const [modal, setModal] = React.useState<{ type: "add" | "edit", row?: any } | null>(null)
-  const [form, setForm] = React.useState<any>({})
-  const isMobile = useIsMobile();
-
-  // Derived columns (with visibility)
-  const columns = React.useMemo(() => initialColumns.filter(c => visibleCols.includes(c.key)), [initialColumns, visibleCols])
-
-  // Search filter
-  const filtered = React.useMemo(() => {
-    if (!search) return data
-    return data.filter(row =>
-      columns.some(col => {
-        const val = row[col.key]
-        return val && String(val).toLowerCase().includes(search.toLowerCase())
-      })
-    )
-  }, [data, search, columns])
-
+export type DataTableProps<TData, TValue> = {
+  data: TData[]
+  columns: ColumnDef<TData, TValue>[]
   // Pagination
-  const pageCount = Math.ceil(filtered.length / pageSize)
-  const paged = React.useMemo(() => filtered.slice(page * pageSize, (page + 1) * pageSize), [filtered, page, pageSize])
-
-  React.useEffect(() => {
-    if (modal?.type === "edit" && modal.row) setForm({ ...modal.row })
-    else if (modal?.type === "add") setForm({})
-  }, [modal])
-
-  // Handlers
-  function handleSave() {
-    if (modal?.type === "add") {
-      setData(prev => [{ ...form, id: Date.now() }, ...prev])
-    } else if (modal?.type === "edit" && modal.row) {
-      setData(prev => prev.map(r => r === modal.row ? { ...form } : r))
-    }
-    setModal(null)
+  pagination?: {
+    pageIndex: number
+    pageSize: number
+    pageCount?: number
   }
-  function handleDelete(row: any) {
-    setData(prev => prev.filter(r => r !== row))
-  }
+  onPaginationChange?: (pagination: { pageIndex: number; pageSize: number }) => void
+  // Filtering
+  globalFilter?: string
+  onGlobalFilterChange?: (value: string) => void
+  // Sorting
+  sorting?: SortingState
+  onSortingChange?: (sorting: SortingState) => void
+  // Column visibility
+  columnVisibility?: VisibilityState
+  onColumnVisibilityChange?: (visibility: VisibilityState) => void
+  // Row selection
+  rowSelection?: RowSelectionState
+  onRowSelectionChange?: (rowSelection: RowSelectionState) => void
+  // Virtualization
+  virtualized?: boolean
+  tableClassName?: string
+  loading?: boolean
+  emptyText?: React.ReactNode
+  style?: React.CSSProperties
+}
+
+export function DataTable<TData, TValue>({
+  data,
+  columns,
+  pagination,
+  onPaginationChange,
+  globalFilter,
+  onGlobalFilterChange,
+  sorting,
+  onSortingChange,
+  columnVisibility,
+  onColumnVisibilityChange,
+  rowSelection,
+  onRowSelectionChange,
+  virtualized = false,
+  tableClassName = "",
+  loading = false,
+  emptyText = "Kayıt bulunamadı.",
+  style = {},
+}: DataTableProps<TData, TValue>) {
+  const defaultPagination = { pageIndex: 0, pageSize: 10 };
+  // Table instance
+  const table = useReactTable<TData>({
+    data,
+    columns,
+    state: {
+      sorting,
+      globalFilter,
+      columnVisibility,
+      rowSelection,
+      pagination: pagination
+        ? { pageIndex: pagination.pageIndex, pageSize: pagination.pageSize }
+        : defaultPagination,
+    },
+    onSortingChange: onSortingChange
+      ? (updaterOrValue) => {
+        if (typeof updaterOrValue === "function") {
+          onSortingChange(updaterOrValue(table.getState().sorting))
+        } else {
+          onSortingChange(updaterOrValue)
+        }
+      }
+      : undefined,
+    onGlobalFilterChange,
+    onColumnVisibilityChange: onColumnVisibilityChange
+      ? (updaterOrValue) => {
+        if (typeof updaterOrValue === "function") {
+          onColumnVisibilityChange(updaterOrValue(table.getState().columnVisibility))
+        } else {
+          onColumnVisibilityChange(updaterOrValue)
+        }
+      }
+      : undefined,
+    onRowSelectionChange: onRowSelectionChange
+      ? (updaterOrValue) => {
+        if (typeof updaterOrValue === "function") {
+          onRowSelectionChange(updaterOrValue(table.getState().rowSelection))
+        } else {
+          onRowSelectionChange(updaterOrValue)
+        }
+      }
+      : undefined,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getPaginationRowModel: pagination ? getPaginationRowModel() : undefined,
+    manualPagination: !!pagination,
+    pageCount: pagination?.pageCount,
+    manualSorting: !!onSortingChange,
+    manualFiltering: !!onGlobalFilterChange,
+    ...(onRowSelectionChange && rowSelection ? { enableRowSelection: true } : {}),
+  })
+
+  // Virtualization
+  const parentRef = React.useRef<HTMLDivElement>(null)
+  const rows = table.getRowModel().rows
+  const rowVirtualizer = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 48,
+    overscan: 8,
+    enabled: virtualized,
+  })
+  const virtualRows = virtualized ? rowVirtualizer.getVirtualItems() : undefined
 
   // Render
   return (
-    <div className="w-full flex flex-col gap-2">
+    <div className="w-full flex flex-col gap-2" style={style}>
       {/* Toolbar */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 px-2 pt-2">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
         <div className="flex items-center gap-2">
           <Input
             placeholder="Ara..."
-            value={search}
-            onChange={e => { setSearch(e.target.value); setPage(0) }}
+            value={globalFilter ?? ""}
+            onChange={e => onGlobalFilterChange?.(e.target.value)}
             className="w-48"
           />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-1"><IconLayoutColumns className="w-4 h-4" /> Kolonlar</Button>
+              <Button variant="outline" size="sm" className="gap-1"><Settings2 className="w-4 h-4" /> Kolonlar</Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start">
-              {initialColumns.map(col => (
+              <DropdownMenuLabel>Kolonları Göster/Gizle</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {table.getAllLeafColumns().map(col => (
                 <DropdownMenuCheckboxItem
-                  key={col.key}
-                  checked={visibleCols.includes(col.key)}
-                  onCheckedChange={() => setVisibleCols(v => v.includes(col.key) ? v.filter(k => k !== col.key) : [...v, col.key])}
+                  key={col.id}
+                  checked={col.getIsVisible()}
+                  onCheckedChange={() => col.toggleVisibility()}
+                  className="capitalize"
                 >
-                  {col.header}
+                  {col.id}
                 </DropdownMenuCheckboxItem>
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-        <Button size="sm" className="hidden md:inline-flex gap-1 md:w-auto" onClick={() => setModal({ type: "add" })}><IconPlus className="w-4 h-4" /> Yeni Ekle</Button>
       </div>
-      {/* Mobile: prominent add button */}
-      <Button size="lg" className="block md:hidden w-full mb-2" onClick={() => setModal({ type: "add" })}><IconPlus className="w-5 h-5" /> Yeni Ekle</Button>
-      {/* Masaüstü görünüm */}
-      <div className="hidden md:block w-full max-w-screen overflow-x-auto">
-        <div className={`rounded-xl border border-[#ededed] bg-white w-full max-w-full overflow-x-auto shadow-none ${tableClassName}`} style={{ width: "100%", maxWidth: "100vw", ...style }}>
-          <table className="w-full" style={{ maxWidth: "100vw" }}>
-            <thead>
-              <tr>
-                {columns.map((column, idx) => (
-                  <th
-                    key={column.key}
-                    className="px-6 py-3 text-xs font-medium uppercase tracking-normal text-[#222] select-none"
-                    style={{
-                      minHeight: headerHeight,
-                      ...column.style,
-                      textAlign: column.align || "left",
-                    }}
-                  >
-                    {column.header}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {paged.length === 0 ? (
-                <tr>
-                  <td colSpan={columns.length} className="text-center py-8 text-muted-foreground text-sm">{emptyText}</td>
-                </tr>
-              ) : (
-                paged.map((row, rowIdx) => (
-                  <tr key={row.id || rowIdx} className={rowIdx % 2 === 0 ? "bg-white" : "bg-[#fafbfc]"}>
-                    {columns.map((column, colIdx) => (
-                      <td
-                        key={column.key}
-                        className="px-6 py-3 text-sm"
-                        style={{
-                          minHeight: rowHeight,
-                          ...column.style,
-                          textAlign: column.align || "left",
-                        }}
-                      >
-                        {column.cell ? column.cell(row) : row[column.key]}
-                      </td>
-                    ))}
+      {/* Table */}
+      <div className={cn("rounded-xl border bg-background w-full overflow-x-auto", tableClassName)}>
+        <div ref={parentRef} style={virtualized ? { maxHeight: 480, overflowY: "auto" } : undefined}>
+          <Table>
+            <TableHeader>
+              {table.getHeaderGroups().map(headerGroup => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map(header => (
+                    <TableHead key={header.id} className="text-xs font-medium uppercase tracking-normal select-none">
+                      {header.isPlaceholder
+                        ? null
+                        : typeof header.column.columnDef.header === "function"
+                          ? header.column.columnDef.header(header.getContext())
+                          : header.column.columnDef.header}
+                    </TableHead>
+                  ))}
+                </TableRow>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={columns.length} className="text-center py-8 text-muted-foreground text-sm">Yükleniyor...</TableCell>
+                </TableRow>
+              ) : rows.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={columns.length} className="text-center py-8 text-muted-foreground text-sm">{emptyText}</TableCell>
+                </TableRow>
+              ) : virtualized ? (
+                <>
+                  <tr style={{ height: rowVirtualizer.getTotalSize() }}>
+                    <td style={{ padding: 0, border: 0 }} colSpan={columns.length}>
+                      <div style={{ position: "relative", height: rowVirtualizer.getTotalSize() }}>
+                        {virtualRows?.map(virtualRow => {
+                          const row = rows[virtualRow.index]
+                          return (
+                            <div
+                              key={row.id}
+                              style={{
+                                position: "absolute",
+                                top: 0,
+                                left: 0,
+                                width: "100%",
+                                transform: `translateY(${virtualRow.start}px)`
+                              }}
+                            >
+                              <TableRow data-index={virtualRow.index}>
+                                {row.getVisibleCells().map(cell => (
+                                  <TableCell key={cell.id}>{cell.renderValue() as React.ReactNode}</TableCell>
+                                ))}
+                              </TableRow>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </td>
                   </tr>
+                </>
+              ) : (
+                rows.map(row => (
+                  <TableRow key={row.id} data-state={rowSelection && onRowSelectionChange && row.getIsSelected() ? "selected" : undefined}>
+                    {row.getVisibleCells().map(cell => (
+                      <TableCell key={cell.id}>{cell.renderValue() as React.ReactNode}</TableCell>
+                    ))}
+                  </TableRow>
                 ))
               )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-      {/* Mobil görünüm: 4'ten fazla kolon varsa açılır panel */}
-      <div className="block md:hidden w-full max-w-full overflow-x-auto">
-        <div className="min-w-full w-full max-w-full overflow-x-auto" style={{ width: "100%", maxWidth: "100vw", ...style }}>
-          {paged.length === 0 ? (
-            <div className="flex items-center justify-center h-60 text-muted-foreground text-sm w-full">
-              {emptyText}
-            </div>
-          ) : (
-            paged.map((row, rowIdx) => (
-              <div key={row.id || rowIdx} className="border-b border-[#ededed] py-2">
-                {columns.slice(0, 4).map((column, colIdx) => (
-                  <div key={column.key} className="flex justify-between px-4 py-1">
-                    <span className="font-medium">{column.header}:</span>
-                    <span>{column.cell ? column.cell(row) : row[column.key]}</span>
-                  </div>
-                ))}
-                {columns.length > 4 && (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="sm" className="mt-2">Diğer Bilgiler</Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start">
-                      {columns.slice(4).map((column) => (
-                        <DropdownMenuItem key={column.key}>
-                          <span className="font-medium">{column.header}:</span>
-                          <span className="ml-2">{column.cell ? column.cell(row) : row[column.key]}</span>
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                )}
-              </div>
-            ))
-          )}
+            </TableBody>
+          </Table>
         </div>
       </div>
       {/* Pagination */}
-      <div className="flex items-center justify-between px-4 py-2 gap-4">
-        <div className="text-muted-foreground text-xs">
-          {filtered.length === 0 ? "0" : page * pageSize + 1} - {Math.min((page + 1) * pageSize, filtered.length)} / {filtered.length} kayıt
+      {onPaginationChange && (
+        <div className="flex items-center justify-between px-4 py-2 gap-4">
+          <div className="text-muted-foreground text-xs">
+            {rows.length === 0
+              ? "0"
+              : ((pagination?.pageIndex ?? 0) * (pagination?.pageSize ?? 10) + 1)}
+            -
+            {Math.min(((pagination?.pageIndex ?? 0) + 1) * (pagination?.pageSize ?? 10), table.getFilteredRowModel().rows.length)}
+            / {table.getFilteredRowModel().rows.length} kayıt
+          </div>
+          <div className="flex items-center gap-1">
+            <Button variant="outline" size="icon" className="size-7" onClick={() => onPaginationChange({ pageIndex: 0, pageSize: pagination?.pageSize ?? 10 })} disabled={pagination?.pageIndex === 0}><ChevronsLeft /></Button>
+            <Button variant="outline" size="icon" className="size-7" onClick={() => onPaginationChange({ pageIndex: Math.max(0, (pagination?.pageIndex ?? 0) - 1), pageSize: pagination?.pageSize ?? 10 })} disabled={pagination?.pageIndex === 0}><ChevronLeft /></Button>
+            <span className="text-xs px-2">{(pagination?.pageIndex ?? 0) + 1} / {(pagination?.pageCount ?? table.getPageCount()) || 1}</span>
+            <Button variant="outline" size="icon" className="size-7" onClick={() => onPaginationChange({ pageIndex: Math.min((pagination?.pageCount ?? table.getPageCount()) - 1, (pagination?.pageIndex ?? 0) + 1), pageSize: pagination?.pageSize ?? 10 })} disabled={(pagination?.pageIndex ?? 0) >= ((pagination?.pageCount ?? table.getPageCount()) - 1)}><ChevronRight /></Button>
+            <Button variant="outline" size="icon" className="size-7" onClick={() => onPaginationChange({ pageIndex: (pagination?.pageCount ?? table.getPageCount()) - 1, pageSize: pagination?.pageSize ?? 10 })} disabled={(pagination?.pageIndex ?? 0) >= ((pagination?.pageCount ?? table.getPageCount()) - 1)}><ChevronsRight /></Button>
+            <select
+              className="ml-2 border rounded px-1 py-0.5 text-xs bg-background"
+              value={pagination?.pageSize ?? 10}
+              onChange={e => onPaginationChange({ pageIndex: 0, pageSize: Number(e.target.value) })}
+            >
+              {[10, 20, 30, 40, 50].map(size => <option key={size} value={size}>{size}</option>)}
+            </select>
+          </div>
         </div>
-        <div className="flex items-center gap-1">
-          <button className="size-7 border rounded" onClick={() => setPage(0)} disabled={page === 0}>{"<<"}</button>
-          <button className="size-7 border rounded" onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0}>{"<"}</button>
-          <span className="text-xs px-2">{page + 1} / {pageCount || 1}</span>
-          <button className="size-7 border rounded" onClick={() => setPage(p => Math.min(pageCount - 1, p + 1))} disabled={page >= pageCount - 1}>{">"}</button>
-          <button className="size-7 border rounded" onClick={() => setPage(pageCount - 1)} disabled={page >= pageCount - 1}>{">>"}</button>
-          <select
-            className="ml-2 border rounded px-1 py-0.5 text-xs bg-background"
-            value={pageSize}
-            onChange={e => { setPageSize(Number(e.target.value)); setPage(0) }}
-          >
-            {[10, 20, 30, 40, 50].map(size => <option key={size} value={size}>{size}</option>)}
-          </select>
-        </div>
-      </div>
-      {/* Add/Edit Modal/Sheet */}
-      {isMobile ? (
-        <Sheet open={!!modal} onOpenChange={v => !v && setModal(null)}>
-          <SheetContent side="bottom" className="max-h-[90vh] overflow-y-auto rounded-t-2xl p-0">
-            <SheetHeader className="p-4 border-b">
-              <SheetTitle>{modal?.type === "add" ? "Yeni Kayıt Ekle" : "Kaydı Düzenle"}</SheetTitle>
-            </SheetHeader>
-            <form className="flex flex-col gap-3 py-2 px-4" onSubmit={e => { e.preventDefault(); handleSave() }}>
-              {initialColumns.filter(col => col.editable !== false).map(col => (
-                <div key={col.key} className="flex flex-col gap-1">
-                  <label className="text-xs font-medium" htmlFor={col.key}>{col.header}</label>
-                  <Input
-                    id={col.key}
-                    type={col.inputType || "text"}
-                    value={form[col.key] ?? ""}
-                    onChange={e => setForm((f: any) => ({ ...f, [col.key]: e.target.value }))}
-                    className="h-8"
-                  />
-                </div>
-              ))}
-              <SheetFooter className="flex flex-row gap-x-2 mt-4">
-                <Button type="button" variant="outline" className="flex-1" onClick={() => setModal(null)}>Vazgeç</Button>
-                <Button type="submit" className="flex-1">Kaydet</Button>
-              </SheetFooter>
-            </form>
-          </SheetContent>
-        </Sheet>
-      ) : (
-        <Dialog open={!!modal} onOpenChange={v => !v && setModal(null)}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{modal?.type === "add" ? "Yeni Kayıt Ekle" : "Kaydı Düzenle"}</DialogTitle>
-            </DialogHeader>
-            <form className="flex flex-col gap-3 py-2" onSubmit={e => { e.preventDefault(); handleSave() }}>
-              {initialColumns.filter(col => col.editable !== false).map(col => (
-                <div key={col.key} className="flex flex-col gap-1">
-                  <label className="text-xs font-medium" htmlFor={col.key}>{col.header}</label>
-                  <Input
-                    id={col.key}
-                    type={col.inputType || "text"}
-                    value={form[col.key] ?? ""}
-                    onChange={e => setForm((f: any) => ({ ...f, [col.key]: e.target.value }))}
-                    className="h-8"
-                  />
-                </div>
-              ))}
-              <DialogFooter className="flex flex-row gap-x-2 mt-2">
-                <Button type="button" variant="outline" className="flex-1" onClick={() => setModal(null)}>Vazgeç</Button>
-                <Button type="submit" className="flex-1">Kaydet</Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
       )}
     </div>
   )
