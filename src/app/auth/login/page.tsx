@@ -44,6 +44,9 @@ export default function LoginPage() {
             const data = await res.json()
             // Token'ı 'Bearer ' prefix'iyle kaydet
             login(`Bearer ${data.token}`)
+            if (data.role) {
+              localStorage.setItem('role', data.role)
+            }
             router.push("/dashboard")
         } catch (err: any) {
             setError(err.message)

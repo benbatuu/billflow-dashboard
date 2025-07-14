@@ -34,68 +34,107 @@ import {
 import { t, getCurrentLang } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
 
-// Menü grupları
 const menuGroups = [
+  // Admin, owner ve superadmin için menüler
   {
     group: 'dashboard',
     title: 'Ana Menü',
     items: [
-      { label: 'dashboard', href: '/', icon: IconDashboard, roles: ['admin', 'owner', 'staff', 'viewer'] },
+      { label: 'dashboard', href: '/', icon: IconDashboard, roles: ['superadmin', 'admin', 'owner', 'accountant', 'viewer'] },
     ],
   },
   {
     group: 'billing',
     title: 'Fatura & Müşteri',
     items: [
-      { label: 'invoices', href: '/dashboard/invoices', icon: IconFileInvoice, roles: ['admin', 'owner', 'staff'] },
-      { label: 'customers', href: '/dashboard/customers', icon: IconUsers, roles: ['admin', 'owner', 'staff'] },
-      { label: 'subscriptions', href: '/dashboard/subscriptions', icon: IconFileText, roles: ['admin', 'owner'] },
-      { label: 'payments', href: '/dashboard/payments', icon: IconCreditCard, roles: ['admin', 'owner', 'staff'] },
+      { label: 'invoices', href: '/dashboard/invoices', icon: IconFileInvoice, roles: ['superadmin', 'admin', 'owner', 'accountant'] },
+      { label: 'customers', href: '/dashboard/customers', icon: IconUsers, roles: ['superadmin', 'admin', 'owner'] },
+      { label: 'subscriptions', href: '/dashboard/subscriptions', icon: IconFileText, roles: ['superadmin', 'admin', 'owner'] },
+      { label: 'payments', href: '/dashboard/payments', icon: IconCreditCard, roles: ['superadmin', 'admin', 'owner'] },
     ],
   },
   {
     group: 'reports',
     title: 'Raporlar',
     items: [
-      { label: 'reports', href: '/dashboard/reports', icon: IconReport, roles: ['admin', 'owner', 'staff', 'viewer'] },
+      { label: 'reports', href: '/dashboard/reports', icon: IconReport, roles: ['superadmin', 'admin', 'owner', 'accountant'] },
     ],
   },
   {
     group: 'settings',
     title: 'Ayarlar',
     items: [
-      { label: 'settings', href: '/dashboard/settings', icon: IconSettings, roles: ['admin', 'owner'], hasSubmenu: true },
-      { label: 'support', href: '/dashboard/support', icon: IconHelp, roles: ['admin', 'owner', 'staff', 'viewer'] },
+      { label: 'settings', href: '/dashboard/settings', icon: IconSettings, roles: ['superadmin', 'admin', 'owner'] },
+      { label: 'support', href: '/dashboard/support', icon: IconHelp, roles: ['superadmin', 'admin', 'owner', 'accountant', 'viewer'] },
+    ],
+  },
+  // Süper Admin Menüsü
+  {
+    group: 'system',
+    title: 'Sistem Yönetimi',
+    items: [
+      { label: 'system-stats', href: '/dashboard/system-stats', icon: IconReport, roles: ['superadmin'] },
+      { label: 'companies', href: '/dashboard/companies', icon: IconBuilding, roles: ['superadmin'] },
+      { label: 'users', href: '/dashboard/users', icon: IconUsers, roles: ['superadmin'] },
+      { label: 'plans', href: '/dashboard/plans', icon: IconCreditCard, roles: ['superadmin'] },
+      { label: 'system-settings', href: '/dashboard/system-settings', icon: IconSettings, roles: ['superadmin'] },
+      { label: 'logs', href: '/dashboard/logs', icon: IconFileText, roles: ['superadmin'] },
     ],
   },
 ]
 
-// Settings alt menüleri
 const settingsSubmenu = [
-  { label: 'profile', href: '/dashboard/settings/profile', icon: IconUser, roles: ['admin', 'owner', 'staff', 'viewer'] },
-  { label: 'company', href: '/dashboard/settings/company', icon: IconBuilding, roles: ['admin', 'owner'] },
-  { label: 'billing', href: '/dashboard/settings/billing', icon: IconCreditCard, roles: ['admin', 'owner'] },
-  { label: 'invoices', href: '/dashboard/settings/invoices', icon: IconFileInvoice, roles: ['admin', 'owner'] },
-  { label: 'notifications', href: '/dashboard/settings/notifications', icon: IconBell, roles: ['owner', 'staff'] },
-  { label: 'team', href: '/dashboard/settings/team', icon: IconUsers, roles: ['admin', 'owner'] },
-  { label: 'integrations', href: '/sdashboard/ettings/integrations', icon: IconPlug, roles: ['admin', 'owner'] },
-  { label: 'security', href: '/dashboard/settings/security', icon: IconShieldLock, roles: ['admin', 'owner', 'staff', 'viewer'] },
+  { label: 'company', href: '/dashboard/settings/company', icon: IconBuilding, roles: ['superadmin', 'admin', 'owner'] },
+  { label: 'billing', href: '/dashboard/settings/billing', icon: IconCreditCard, roles: ['superadmin', 'admin', 'owner'] },
+  { label: 'invoices', href: '/dashboard/settings/invoices', icon: IconFileInvoice, roles: ['superadmin', 'admin', 'owner'] },
+  { label: 'notifications', href: '/dashboard/settings/notifications', icon: IconBell, roles: ['superadmin', 'owner'] },
+  { label: 'team', href: '/dashboard/settings/team', icon: IconUsers, roles: ['superadmin', 'admin', 'owner'] },
+  { label: 'integrations', href: '/dashboard/settings/integrations', icon: IconPlug, roles: ['superadmin', 'admin', 'owner'] },
+  { label: 'security', href: '/dashboard/settings/security', icon: IconShieldLock, roles: ['superadmin', 'admin', 'owner', 'accountant', 'viewer'] },
 ]
-
-function getUserRole() {
-  if (typeof window !== "undefined") {
-    return localStorage.getItem("role") || "admin"
-  }
-  return "admin"
-}
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname()
-  const [role, setRole] = React.useState("admin")
+  const [role, setRole] = React.useState<string | null>(null)
   const [labels, setLabels] = React.useState<{ [key: string]: string }>({})
   const [lang, setLang] = React.useState(getCurrentLang())
-  const [expandedGroups, setExpandedGroups] = React.useState<Set<string>>(new Set(['dashboard']))
   const [expandedSettings, setExpandedSettings] = React.useState(false)
+
+  // Gerçek rolü sunucudan çek ve localStorage'ı güncelle (her sayfa değişiminde ve storage event'inde)
+  React.useEffect(() => {
+    async function fetchRole() {
+      try {
+        const res = await fetch('/api/auth/me', { credentials: 'include' })
+        if (res.ok) {
+          const data = await res.json()
+          let roleName = null;
+          if (data.role) {
+            if (typeof data.role === 'string') {
+              roleName = data.role;
+            } else if (typeof data.role === 'object' && data.role.name) {
+              roleName = data.role.name;
+            }
+          }
+          if (roleName) {
+            console.log("Fetched role from /api/auth/me:", roleName);
+            console.log("localStorage before set:", localStorage.getItem('role'));
+            setRole(roleName)
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('role', roleName)
+              console.log("localStorage after set:", localStorage.getItem('role'));
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching role:", err);
+      }
+    }
+    fetchRole()
+    // Storage event ile başka tabda değişirse de güncelle
+    const onStorage = () => fetchRole()
+    window.addEventListener('storage', onStorage)
+    return () => window.removeEventListener('storage', onStorage)
+  }, [pathname])
 
   // Dil değişimini dinle (hem storage event'i hem custom event)
   React.useEffect(() => {
@@ -111,7 +150,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   // Dil veya rol değiştiğinde menü başlıklarını güncelle
   React.useEffect(() => {
-    setRole(getUserRole())
     // Tüm gruplardaki item'ları ve settings submenu'lerini topla
     const allItems = [
       ...menuGroups.flatMap(g => g.items),
@@ -122,7 +160,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       allItems.forEach((item, i) => { obj[item.label] = arr[i] })
       setLabels(obj)
     })
-  }, [lang])
+  }, [lang, role])
 
   // Settings sayfalarında ise settings menüsünü açık tut
   React.useEffect(() => {
@@ -130,6 +168,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       setExpandedSettings(true)
     }
   }, [pathname])
+
+  // Eğer rol null ise, loading göster
+  if (!role) {
+    return <div className="p-4 text-muted-foreground">Yükleniyor...</div>;
+  }
 
   // Rol ile filtrelenmiş menü grupları
   const filteredGroups = menuGroups.map(group => ({
@@ -147,18 +190,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     return pathname.startsWith(href)
   }
 
-  // Settings menüsünün aktif olup olmadığını kontrol et
   const isSettingsActive = pathname.startsWith('/settings')
 
-  const toggleGroup = (groupKey: string) => {
-    const newExpanded = new Set(expandedGroups)
-    if (newExpanded.has(groupKey)) {
-      newExpanded.delete(groupKey)
-    } else {
-      newExpanded.add(groupKey)
-    }
-    setExpandedGroups(newExpanded)
-  }
 
   const toggleSettings = () => {
     setExpandedSettings(!expandedSettings)
@@ -187,11 +220,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
 
-      <SidebarContent className="px-2 py-4">
+      <SidebarContent className="px-2">
         {filteredGroups.map(group => (
           <SidebarGroup key={group.group} className="mb-6">
             <SidebarGroupContent>
-              <div className="px-3 mb-2">
+              <div className="px-3 mb-1">
                 <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                   {group.title}
                 </h3>
@@ -199,7 +232,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               <SidebarMenu>
                 {group.items.map(item => (
                   <SidebarMenuItem key={item.label}>
-                    {item.hasSubmenu ? (
+                    {item.roles.includes('settings') ? (
                       <>
                         <SidebarMenuButton
                           onClick={toggleSettings}

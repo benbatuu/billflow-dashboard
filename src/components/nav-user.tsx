@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthProvider";
+import React from "react";
 
 export function NavUser({
   user,
@@ -36,6 +37,14 @@ export function NavUser({
 }) {
   const { logout } = useAuth();
   const router = useRouter();
+
+  // Rolü localStorage'dan al
+  const [role, setRole] = React.useState<string>("admin");
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      setRole(localStorage.getItem("role") || "admin");
+    }
+  }, []);
 
   const handleLogout = async () => {
     logout();
@@ -51,6 +60,10 @@ export function NavUser({
   const handleNotifications = () => {
     router.push("/dashboard/notifications");
   };
+
+  // Menüde hangi itemlar hangi role göre görünecek
+  const showBilling = role === "admin" || role === "owner";
+  const showNotifications = role === "owner" || role === "staff";
 
   return (
     <DropdownMenu>
@@ -95,14 +108,18 @@ export function NavUser({
             <IconUserCircle />
             Account
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleBilling}>
-            <IconCreditCard />
-            Billing
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleNotifications}>
-            <IconNotification />
-            Notifications
-          </DropdownMenuItem>
+          {showBilling && (
+            <DropdownMenuItem onClick={handleBilling}>
+              <IconCreditCard />
+              Billing
+            </DropdownMenuItem>
+          )}
+          {showNotifications && (
+            <DropdownMenuItem onClick={handleNotifications}>
+              <IconNotification />
+              Notifications
+            </DropdownMenuItem>
+          )}
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout}>

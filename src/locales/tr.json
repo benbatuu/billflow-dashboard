@@ -19,7 +19,13 @@
         "team": "Ekip",
         "settings": "Ayarlar",
         "integrations": "Entegrasyonlar",
-        "support": "Destek"
+        "support": "Destek",
+        "system-stats": "Sistem İstatistikleri",
+        "companies": "Şirketler",
+        "users": "Kullanıcılar",
+        "plans": "Planlar",
+        "system-settings": "Sistem Ayarları",
+        "logs": "Loglar"
     },
     "invoices": {
         "number": "Fatura No",
@@ -192,6 +198,132 @@
         "billing": {
             "card": {
                 "expiry_year_error": "Son kullanma yılı geçmiş olamaz."
+            }
+        },
+        "system-stats": {
+            "title": "Sistem İstatistikleri",
+            "subtitle": "Sistem genelindeki metrikler ve son aktivitelerin özeti.",
+            "summary": "Özet",
+            "recent_activities": "Son Aktiviteler",
+            "system_status": "Sistem Durumu",
+            "uptime": "Çalışma Süresi",
+            "avg_response": "Ortalama Yanıt Süresi",
+            "active_users": "Aktif Kullanıcılar",
+            "metric": {
+                "total_companies": "Toplam Şirket",
+                "total_users": "Toplam Kullanıcı",
+                "total_invoices": "Toplam Fatura",
+                "total_subscriptions": "Toplam Abonelik",
+                "monthly_revenue": "Aylık Gelir",
+                "active_users": "Aktif Kullanıcılar"
+            },
+            "trend": {
+                "this_month": "Bu ay",
+                "this_week": "Bu hafta",
+                "vs_last_month": "Geçen aya göre",
+                "last_24h": "Son 24 saat"
+            },
+            "activity": {
+                "new_company": "Yeni şirket kaydedildi",
+                "subscription_renewed": "Abonelik yenilendi",
+                "invoice_paid": "Fatura ödendi",
+                "user_added": "Yeni kullanıcı eklendi",
+                "subscription_cancelled": "Abonelik iptal edildi"
+            },
+            "time": {
+                "2h_ago": "2 saat önce",
+                "5h_ago": "5 saat önce",
+                "1d_ago": "1 gün önce",
+                "2d_ago": "2 gün önce",
+                "3d_ago": "3 gün önce"
+            }
+        },
+        "companies": {
+            "title": "Şirketler",
+            "dashboard": "Gösterge Paneli",
+            "stats": {
+                "totalCompanies": "Toplam Şirket",
+                "activeCompanies": "Aktif Şirketler",
+                "totalRevenue": "Toplam Gelir",
+                "averageUsers": "Ortalama Kullanıcı"
+            },
+            "filters": {
+                "search": "Şirket ara...",
+                "filterByStatus": "Duruma Göre Filtrele",
+                "filterByPlan": "Plana Göre Filtrele",
+                "all": "Tümü",
+                "active": "Aktif",
+                "trial": "Deneme",
+                "suspended": "Askıya Alınmış",
+                "basic": "Temel",
+                "professional": "Profesyonel",
+                "enterprise": "Kurumsal"
+            },
+            "table": {
+                "company": "Şirket",
+                "plan": "Plan",
+                "status": "Durum",
+                "revenue": "Gelir",
+                "users": "Kullanıcılar",
+                "lastLogin": "Son Giriş",
+                "actions": "İşlemler"
+            },
+            "actions": {
+                "view": "Görüntüle",
+                "edit": "Düzenle",
+                "delete": "Sil"
+            },
+            "details": {
+                "companyDetails": "Şirket Detayları",
+                "contactInformation": "İletişim Bilgileri",
+                "subscriptionDetails": "Abonelik Detayları",
+                "usageStatistics": "Kullanım İstatistikleri"
+            },
+            "fields": {
+                "name": "İsim",
+                "email": "E-posta",
+                "phone": "Telefon",
+                "address": "Adres",
+                "contactPerson": "İletişim Kişisi",
+                "industry": "Sektör",
+                "registrationDate": "Kayıt Tarihi",
+                "monthlyRevenue": "Aylık Gelir",
+                "userCount": "Kullanıcı Sayısı",
+                "storageUsed": "Kullanılan Depolama",
+                "storageLimit": "Depolama Limiti",
+                "plan": "Plan",
+                "status": "Durum"
+            },
+            "buttons": {
+                "close": "Kapat",
+                "save": "Kaydet",
+                "cancel": "İptal"
+            },
+            "status": {
+                "active": "Aktif",
+                "trial": "Deneme",
+                "suspended": "Askıya Alınmış"
+            }
+        },
+        "users": {
+            "title": "Kullanıcılar",
+            "subtitle": "Sistemdeki tüm kullanıcılar burada yönetilecek.",
+            "table": {
+                "name": "Ad Soyad",
+                "email": "E-posta",
+                "role": "Rol",
+                "status": "Durum"
+            },
+            "status": {
+                "active": "Aktif",
+                "inactive": "Pasif"
+            },
+            "role": {
+                "superadmin": "Süper Admin",
+                "owner": "Sahip",
+                "admin": "Yönetici",
+                "staff": "Personel",
+                "viewer": "İzleyici"
             }
         }
     }

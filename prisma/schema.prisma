@@ -1,6 +1,5 @@
 generator client {
   provider        = "prisma-client-js"
-  output          = "./generated/client"
   previewFeatures = ["multiSchema"]
   binaryTargets   = ["native", "darwin", "debian-openssl-1.1.x"]
 }
@@ -21,8 +20,27 @@ model User {
   updatedAt     DateTime @updatedAt
   sessions      Session[]
   customers     Customer[] 
+  roleId        String? // Kullanıcının rolü
+  role          Role?    @relation(fields: [roleId], references: [id])
   @@index([email])
 
+  @@schema("users")
+}
+
+model Role {
+  id          String       @id @default(uuid())
+  name        String       @unique
+  description String?
+  permissions Permission[] @relation("RolePermissions")
+  users       User[]
+  @@schema("users")
+}
+
+model Permission {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  roles       Role[]   @relation("RolePermissions")
   @@schema("users")
 }
 

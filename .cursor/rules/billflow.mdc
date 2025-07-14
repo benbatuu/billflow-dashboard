@@ -1,120 +1,328 @@
 ---
 alwaysApply: true
 ---
-# 📄 SaaS Uygulama Geliştirme Rehberi & Kuralları
 
-## ✅ Uygulamanın Adı
-Billflow Clone — Fatura & Abonelik Takip Uygulaması
+# =========================
+# BILLFLOW SaaS RULES FILE
+# =========================
 
-## ✅ Uygulamanın Amacı
-Bu uygulama, küçük işletmelerin, freelancerların ve ajansların:
-- Faturalarını hızlıca oluşturabilmesi (PDF dahil)
-- Müşteri yönetimi yapabilmesi
-- Abonelik takibi & ödeme hatırlatmaları planlayabilmesi
-- Stripe veya iyzico üzerinden ödeme alabilmesi
-- Otomatik e-posta bildirimleri gönderebilmesi
-- Gelir-gider raporları ve istatistikleri görebilmesi  
-için geliştirilmiştir.
+project.name = Billflow
+project.type = SaaS (Fatura ve Abonelik Takibi)
+project.target_users = Freelancer, Ajans, KOBİ
+project.primary_stack = Next.js (App Router) + Tailwind + Prisma + Shadcn UI
 
----
+# === CORE MODULES ===
 
-## ✅ Hedef Kullanıcılar:
-- Freelancerlar
-- Küçük ajanslar
-- KOBİ’ler
-- SaaS girişimleri
+modules = [
+  "Authentication",
+  "Dashboard",
+  "Invoices",
+  "Customers",
+  "Subscriptions",
+  "Reports",
+  "Settings",
+  "Team Management",
+  "Integrations",
+  "Billing & Plans"
+]
 
----
+# === AUTH RULES ===
+auth.methods = ["email_password", "magic_link"]
+auth.pages = ["login", "register", "forgot-password", "reset-password"]
+auth.otp = optional
+auth.redirect_after_login = "/dashboard"
+auth.session_management = required
 
-## ✅ Rollerin Tanımı
-| Rol       | Açıklama                                                                 |
-|-----------|--------------------------------------------------------------------------|
-| **Admin** | Tüm sistemi yönetir, tüm verilere erişebilir. Genelde yazılım sahibi.    |
-| **Owner** | Hesabın/şirketin sahibi. Faturalandırma, müşteri, ödeme yönetimi yetkisi.|
-| **Staff** | Owner tarafından davet edilen ekip üyeleri, bazı işlemleri yapabilir.    |
-| **Viewer**| Sadece rapor ve dashboard görüntüler, işlem yapamaz.                     |
+# === ROUTING STRUCTURE ===
+routes.protected = [
+  "/dashboard",
+  "/invoices",
+  "/customers",
+  "/subscriptions",
+  "/settings",
+  "/team"
+]
+routes.public = ["/", "/login", "/register", "/pricing"]
 
----
+# === ROLE-BASED ACCESS CONTROL ===
+roles = [
+  "Owner",
+  "Admin",
+  "Accountant",
+  "Viewer"
+]
 
-## ✅ Menü Yapısı & Erişim
-| Menü                      | Admin | Owner | Staff | Viewer |
-|---------------------------|-------|-------|-------|--------|
-| Dashboard                 | ✅     | ✅     | ✅     | ✅      |
-| Invoices (Faturalar)      | ✅     | ✅     | ✅     | ❌      |
-| Customers (Müşteriler)    | ✅     | ✅     | ✅     | ❌      |
-| Subscriptions (Abonelikler)| ✅    | ✅     | ❌     | ❌      |
-| Payments (Ödemeler)       | ✅     | ✅     | ✅     | ❌      |
-| Reports (Raporlar)        | ✅     | ✅     | ✅     | ✅      |
-| Notifications (E-posta)   | ✅     | ✅     | ❌     | ❌      |
-| Team (Ekip Yönetimi)      | ✅     | ✅     | ✅     | ❌      |
-| Settings (Ayarlar)        | ✅     | ✅     | ❌     | ❌      |
-| Integrations (Entegrasyon)| ✅     | ✅     | ❌     | ❌      |
-| Support (Destek)          | ✅     | ✅     | ✅     | ✅      |
+roles.permissions = {
+  "Owner": "Full access to all modules including billing and team",
+  "Admin": "Create/edit invoices, customers, subscriptions",
+  "Accountant": "Read-only invoices and financial reports",
+  "Viewer": "Dashboard and read-only data access"
+}
 
----
+# === SETTINGS MODULE STRUCTURE ===
+settings.sections = [
+  "Profile",
+  "Billing",
+  "Invoices",
+  "Integrations",
+  "Team"
+]
 
-## ✅ Temel İşlevler
-### 1. Fatura Yönetimi:
-- Fatura oluşturma, PDF indirme
-- Ödeme durumu takibi
+settings.profile.fields = ["avatar", "full_name", "email", "password_change"]
+settings.billing.info = ["active_plan", "payment_method", "invoices_history"]
+settings.invoices.config = ["prefix", "template", "default_currency", "tax"]
+settings.integrations.groups = {
+  "Payments": ["Stripe", "iyzico"],
+  "Accounting": ["QuickBooks", "Xero"],
+  "Notifications": ["SendGrid", "Mailgun", "Twilio", "Slack"],
+  "Automation": ["Zapier", "Webhook"]
+}
+settings.team.features = ["invite", "role_assignment", "remove", "resend_invite"]
 
-### 2. Müşteri Yönetimi:
-- Müşteri ekleme/düzenleme/silme
-- Müşteri fatura geçmişi
+# === BILLING / PLAN STRUCTURE ===
+plans = [
+  {name: "Free", users: 1, customers: 5},
+  {name: "Starter", users: 3, customers: 50},
+  {name: "Pro", users: 10, customers: "unlimited"},
+  {name: "Business", users: 25, customers: "unlimited"}
+]
+billing.provider = "Stripe"
+billing.webhooks = ["subscription_updated", "invoice_paid", "payment_failed"]
 
-### 3. Abonelik Yönetimi:
-- Abonelik oluşturma
-- Ödeme hatırlatıcıları
-- Stripe / iyzico entegrasyonu
+# === INVOICE MODULE ===
+invoice.statuses = ["draft", "sent", "paid", "overdue"]
+invoice.fields = ["title", "items", "customer", "due_date", "notes", "tax"]
+invoice.pdf = true
+invoice.email_send = true
+invoice.repeat = true
 
-### 4. Bildirimler:
-- E-posta şablonları
-- Otomatik bildirimler
+# === SUBSCRIPTIONS ===
+subscriptions.features = [
+  "recurring_payment",
+  "cancel/pause",
+  "trial_periods",
+  "plan_mapping_to_customers"
+]
 
-### 5. Raporlar:
-- Gelir & gider analizi
-- Grafiksel istatistikler
+# === CUSTOMERS ===
+customer.fields = ["name", "email", "company", "tags", "notes"]
+customer.view_links = ["invoices", "subscriptions"]
 
-### 6. Entegrasyonlar:
-- Stripe
-- iyzico
-- API Yönetimi (opsiyonel)
+# === TEAM ===
+team.roles = roles
+team.limits_by_plan = true
+team.invite_flow = {
+  "send_email_invite",
+  "accept_with_registration",
+  "set_password"
+}
 
----
+# === DASHBOARD CARDS ===
+dashboard.widgets = [
+  "monthly_revenue_chart",
+  "invoice_summary",
+  "subscription_activity",
+  "recent_customers",
+  "outstanding_invoices"
+]
 
-## ✅ Geliştirme Notları:
-- Uygulama **Next.js (App Router)** ve **shadcn/ui** üzerine kurulu.
-- Role-based access için middleware kullanılacak.
-- Her sayfa erişiminde **role check** zorunlu.
-- Stripe / iyzico için ayrı servis dosyaları açılacak.
-- Otomatik e-posta için mailer servisi (örn. Resend, Nodemailer).
-- PDF işlemleri için **pdf-lib** veya benzeri kullanılabilir.
-- Mobil uyumlu olacak (Tailwind CSS üzerinden).
+# === FILE STRUCTURE CONVENTIONS ===
+directories.structure = {
+  "/app": "All route handlers and pages",
+  "/components": "All UI and reusable components",
+  "/lib": "Helpers and utility logic (stripe, pdf, auth, charts)",
+  "/prisma": "Database schema and seed scripts",
+  "/types": "Custom types and enums",
+  "/public": "Static assets and brand logos"
+}
 
----
+# === DESIGN SYSTEM ===
+design.framework = "Tailwind CSS"
+design.components = "shadcn/ui"
+design.charts = "Recharts or ApexCharts"
+design.pdf = "@react-pdf/renderer or pdf-lib"
 
-## ✅ Kod Standartları:
-- Fonksiyon isimleri İngilizce.
-- Komponent isimleri PascalCase.
-- Dosya isimleri kebab-case.
-- Role & Menu yetkileri JSON dosyasından otomatik çekilecek.
-- Shadcn UI bileşenleri ile tutarlı tema.
+# === API LAYER ===
+api.pattern = "REST or RPC via Server Actions"
+api.auth_protection = "Middleware / Auth guards"
+api.rate_limits = "Optional per plan"
 
----
+# === NAMING CONVENTIONS ===
+components.naming = "PascalCase"
+utils.naming = "camelCase"
+routes.naming = "dash-case"
+enums.naming = "UPPER_SNAKE_CASE"
 
-## ✅ Ekstra:
-- Sidebar, dinamik olarak kullanıcı rolüne göre menüleri gösterecek.
-- Dashboard, gelir & abonelik özetini içerecek.
-- Settings sayfasında firma bilgileri, fatura ayarları olacak.
+# === AI SUGGESTIONS PRIORITY ===
+suggest.code.style = "production-grade"
+suggest.ui.style = "minimalist, elegant, whitespace-heavy"
+suggest.logic = "scalable, reusable, well-typed"
 
----
+# === NOTES ===
+note.project_goal = "To streamline subscription-based invoicing for small teams and freelancers with clear UI and Stripe-powered payments"
+note.export_formats = ["PDF", "Email"]
+note.dev_mode = "modular, extendable, clean architecture"
 
-## ✅ Kurallar:
-1. Role-based Access Control (RBAC) **her sayfada zorunlu**.
-2. Menü bileşenleri **tek bir dosyada** tutulacak (`menu-config.ts`).
-3. Yeni özellik eklenirken:
-   - Menüye eklenecekse önce `menu-config.ts`'e rol tanımıyla eklenmeli.
-   - Yetki kontrolü unutulmamalı.
-4. E-posta bildirimleri için test ortamı ayarlanmalı.
-5. Ödeme servisleri ayrı dosyada kapsüllenmeli.
+# === END ===
+# =========================
+# BILLFLOW SaaS RULES FILE
+# =========================
 
+project.name = Billflow
+project.type = SaaS (Fatura ve Abonelik Takibi)
+project.target_users = Freelancer, Ajans, KOBİ
+project.primary_stack = Next.js (App Router) + Tailwind + Prisma + Shadcn UI
+
+# === CORE MODULES ===
+
+modules = [
+  "Authentication",
+  "Dashboard",
+  "Invoices",
+  "Customers",
+  "Subscriptions",
+  "Reports",
+  "Settings",
+  "Team Management",
+  "Integrations",
+  "Billing & Plans"
+]
+
+# === AUTH RULES ===
+auth.methods = ["email_password", "magic_link"]
+auth.pages = ["login", "register", "forgot-password", "reset-password"]
+auth.otp = optional
+auth.redirect_after_login = "/dashboard"
+auth.session_management = required
+
+# === ROUTING STRUCTURE ===
+routes.protected = [
+  "/dashboard",
+  "/invoices",
+  "/customers",
+  "/subscriptions",
+  "/settings",
+  "/team"
+]
+routes.public = ["/", "/login", "/register", "/pricing"]
+
+# === ROLE-BASED ACCESS CONTROL ===
+roles = [
+  "Owner",
+  "Admin",
+  "Accountant",
+  "Viewer"
+]
+
+roles.permissions = {
+  "Owner": "Full access to all modules including billing and team",
+  "Admin": "Create/edit invoices, customers, subscriptions",
+  "Accountant": "Read-only invoices and financial reports",
+  "Viewer": "Dashboard and read-only data access"
+}
+
+# === SETTINGS MODULE STRUCTURE ===
+settings.sections = [
+  "Profile",
+  "Billing",
+  "Invoices",
+  "Integrations",
+  "Team"
+]
+
+settings.profile.fields = ["avatar", "full_name", "email", "password_change"]
+settings.billing.info = ["active_plan", "payment_method", "invoices_history"]
+settings.invoices.config = ["prefix", "template", "default_currency", "tax"]
+settings.integrations.groups = {
+  "Payments": ["Stripe", "iyzico"],
+  "Accounting": ["QuickBooks", "Xero"],
+  "Notifications": ["SendGrid", "Mailgun", "Twilio", "Slack"],
+  "Automation": ["Zapier", "Webhook"]
+}
+settings.team.features = ["invite", "role_assignment", "remove", "resend_invite"]
+
+# === BILLING / PLAN STRUCTURE ===
+plans = [
+  {name: "Free", users: 1, customers: 5},
+  {name: "Starter", users: 3, customers: 50},
+  {name: "Pro", users: 10, customers: "unlimited"},
+  {name: "Business", users: 25, customers: "unlimited"}
+]
+billing.provider = "Stripe"
+billing.webhooks = ["subscription_updated", "invoice_paid", "payment_failed"]
+
+# === INVOICE MODULE ===
+invoice.statuses = ["draft", "sent", "paid", "overdue"]
+invoice.fields = ["title", "items", "customer", "due_date", "notes", "tax"]
+invoice.pdf = true
+invoice.email_send = true
+invoice.repeat = true
+
+# === SUBSCRIPTIONS ===
+subscriptions.features = [
+  "recurring_payment",
+  "cancel/pause",
+  "trial_periods",
+  "plan_mapping_to_customers"
+]
+
+# === CUSTOMERS ===
+customer.fields = ["name", "email", "company", "tags", "notes"]
+customer.view_links = ["invoices", "subscriptions"]
+
+# === TEAM ===
+team.roles = roles
+team.limits_by_plan = true
+team.invite_flow = {
+  "send_email_invite",
+  "accept_with_registration",
+  "set_password"
+}
+
+# === DASHBOARD CARDS ===
+dashboard.widgets = [
+  "monthly_revenue_chart",
+  "invoice_summary",
+  "subscription_activity",
+  "recent_customers",
+  "outstanding_invoices"
+]
+
+# === FILE STRUCTURE CONVENTIONS ===
+directories.structure = {
+  "/app": "All route handlers and pages",
+  "/components": "All UI and reusable components",
+  "/lib": "Helpers and utility logic (stripe, pdf, auth, charts)",
+  "/prisma": "Database schema and seed scripts",
+  "/types": "Custom types and enums",
+  "/public": "Static assets and brand logos"
+}
+
+# === DESIGN SYSTEM ===
+design.framework = "Tailwind CSS"
+design.components = "shadcn/ui"
+design.charts = "Recharts or ApexCharts"
+design.pdf = "@react-pdf/renderer or pdf-lib"
+
+# === API LAYER ===
+api.pattern = "REST or RPC via Server Actions"
+api.auth_protection = "Middleware / Auth guards"
+api.rate_limits = "Optional per plan"
+
+# === NAMING CONVENTIONS ===
+components.naming = "PascalCase"
+utils.naming = "camelCase"
+routes.naming = "dash-case"
+enums.naming = "UPPER_SNAKE_CASE"
+
+# === AI SUGGESTIONS PRIORITY ===
+suggest.code.style = "production-grade"
+suggest.ui.style = "minimalist, elegant, whitespace-heavy"
+suggest.logic = "scalable, reusable, well-typed"
+
+# === NOTES ===
+note.project_goal = "To streamline subscription-based invoicing for small teams and freelancers with clear UI and Stripe-powered payments"
+note.export_formats = ["PDF", "Email"]
+note.dev_mode = "modular, extendable, clean architecture"
+
+# === END ===

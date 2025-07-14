@@ -1,6 +1,12 @@
-"use client"
+import { getUserFromRequest } from '@/lib/auth';
+import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
 
-export default function ReportsPage() {
+export default async function ReportsPage() {
+  const user = await getUserFromRequest(cookies());
+  if (!user || !user.role || !['admin', 'owner', 'accountant'].includes(user.role.name)) {
+    redirect('/dashboard/not-authorized');
+  }
   return (
     <div className="w-full mx-auto p-6">
       <h1 className="text-2xl font-bold mb-6">Raporlar (Demo)</h1>

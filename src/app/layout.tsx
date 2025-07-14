@@ -10,6 +10,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    // Not authorized sayfasında progress gösterme
+    if (pathname === "/dashboard/not-authorized") {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     const timeout = setTimeout(() => setLoading(false), 800); // min 800ms loading
     return () => clearTimeout(timeout);

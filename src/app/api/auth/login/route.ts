@@ -27,7 +27,13 @@ export async function POST(req: NextRequest) {
         },
     });
 
-    const res = NextResponse.json({ success: true });
+    // Kullanıcının rolünü bul
+    let roleName = "viewer";
+    if (user.roleId) {
+        const role = await prisma.role.findUnique({ where: { id: user.roleId } });
+        if (role) roleName = role.name;
+    }
+    const res = NextResponse.json({ success: true, role: roleName });
     res.cookies.set("sid", sessionToken, {
         httpOnly: true,
         secure: true,

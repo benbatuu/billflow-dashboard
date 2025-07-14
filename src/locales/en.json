@@ -19,7 +19,13 @@
         "team": "Team",
         "settings": "Settings",
         "integrations": "Integrations",
-        "support": "Support"
+        "support": "Support",
+        "system-stats": "System Stats",
+        "companies": "Companies",
+        "users": "Users",
+        "plans": "Plans",
+        "system-settings": "System Settings",
+        "logs": "Logs"
     },
     "invoices": {
         "number": "Invoice No",
@@ -191,6 +197,132 @@
             "save": "Save",
             "saving": "Saving...",
             "success": "Security settings updated!"
+        }
+    },
+    "system-stats": {
+        "title": "System Stats",
+        "subtitle": "Overview of system-wide metrics and recent activity.",
+        "summary": "Summary",
+        "recent_activities": "Recent Activities",
+        "system_status": "System Status",
+        "uptime": "Uptime",
+        "avg_response": "Avg. Response Time",
+        "active_users": "Active Users",
+        "metric": {
+            "total_companies": "Total Companies",
+            "total_users": "Total Users",
+            "total_invoices": "Total Invoices",
+            "total_subscriptions": "Total Subscriptions",
+            "monthly_revenue": "Monthly Revenue",
+            "active_users": "Active Users"
+        },
+        "trend": {
+            "this_month": "This month",
+            "this_week": "This week",
+            "vs_last_month": "vs last month",
+            "last_24h": "Last 24 hours"
+        },
+        "activity": {
+            "new_company": "New company registered",
+            "subscription_renewed": "Subscription renewed",
+            "invoice_paid": "Invoice paid",
+            "user_added": "New user added",
+            "subscription_cancelled": "Subscription cancelled"
+        },
+        "time": {
+            "2h_ago": "2 hours ago",
+            "5h_ago": "5 hours ago",
+            "1d_ago": "1 day ago",
+            "2d_ago": "2 days ago",
+            "3d_ago": "3 days ago"
+        }
+    },
+    "companies": {
+        "title": "Companies",
+        "dashboard": "Dashboard",
+        "stats": {
+            "totalCompanies": "Total Companies",
+            "activeCompanies": "Active Companies",
+            "totalRevenue": "Total Revenue",
+            "averageUsers": "Average Users"
+        },
+        "filters": {
+            "search": "Search companies...",
+            "filterByStatus": "Filter by Status",
+            "filterByPlan": "Filter by Plan",
+            "all": "All",
+            "active": "Active",
+            "trial": "Trial",
+            "suspended": "Suspended",
+            "basic": "Basic",
+            "professional": "Professional",
+            "enterprise": "Enterprise"
+        },
+        "table": {
+            "company": "Company",
+            "plan": "Plan",
+            "status": "Status",
+            "revenue": "Revenue",
+            "users": "Users",
+            "lastLogin": "Last Login",
+            "actions": "Actions"
+        },
+        "actions": {
+            "view": "View",
+            "edit": "Edit",
+            "delete": "Delete"
+        },
+        "details": {
+            "companyDetails": "Company Details",
+            "contactInformation": "Contact Information",
+            "subscriptionDetails": "Subscription Details",
+            "usageStatistics": "Usage Statistics"
+        },
+        "fields": {
+            "name": "Name",
+            "email": "Email",
+            "phone": "Phone",
+            "address": "Address",
+            "contactPerson": "Contact Person",
+            "industry": "Industry",
+            "registrationDate": "Registration Date",
+            "monthlyRevenue": "Monthly Revenue",
+            "userCount": "User Count",
+            "storageUsed": "Storage Used",
+            "storageLimit": "Storage Limit",
+            "plan": "Plan",
+            "status": "Status"
+        },
+        "buttons": {
+            "close": "Close",
+            "save": "Save",
+            "cancel": "Cancel"
+        },
+        "status": {
+            "active": "Active",
+            "trial": "Trial",
+            "suspended": "Suspended"
+        }
+    },
+    "users": {
+        "title": "Users",
+        "subtitle": "All users in the system will be managed here.",
+        "table": {
+            "name": "Name",
+            "email": "Email",
+            "role": "Role",
+            "status": "Status"
+        },
+        "status": {
+            "active": "Active",
+            "inactive": "Inactive"
+        },
+        "role": {
+            "superadmin": "Super Admin",
+            "owner": "Owner",
+            "admin": "Admin",
+            "staff": "Staff",
+            "viewer": "Viewer"
         }
     }
 }
